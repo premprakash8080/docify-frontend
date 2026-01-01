@@ -54,12 +54,11 @@ function SignInPage() {
       .then((user) => {
         // No need to do anything, user data will be set at app/auth/AuthContext
       })
-      .catch((_errors) => {
-        _errors.forEach((error) => {
-          setError(error.type, {
-            type: 'manual',
-            message: error.message,
-          });
+      .catch((error) => {
+        // Handle single error object (not array)
+        setError('email', {
+          type: 'manual',
+          message: error.message || 'Login failed. Please check your credentials.',
         });
       });
   }

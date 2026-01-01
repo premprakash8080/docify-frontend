@@ -4,10 +4,8 @@ import FuseLayout from '@fuse/core/FuseLayout';
 import FuseTheme from '@fuse/core/FuseTheme';
 import { SnackbarProvider } from 'notistack';
 import { useSelector } from 'react-redux';
-import rtlPlugin from 'stylis-plugin-rtl';
 import createCache from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
-import { selectCurrentLanguageDirection } from 'app/store/i18nSlice';
 import { selectUser } from 'app/store/userSlice';
 import themeLayouts from 'app/theme-layouts/themeLayouts';
 import { selectMainTheme } from 'app/store/fuse/settingsSlice';
@@ -25,11 +23,6 @@ import { AuthProvider } from './auth/AuthContext';
 // axios.defaults.headers.common['Content-Type'] = 'application/x-www-form-urlencoded';
 
 const emotionCacheOptions = {
-  rtl: {
-    key: 'muirtl',
-    stylisPlugins: [rtlPlugin],
-    insertionPoint: document.getElementById('emotion-insertion-point'),
-  },
   ltr: {
     key: 'muiltr',
     stylisPlugins: [],
@@ -39,8 +32,8 @@ const emotionCacheOptions = {
 
 function App() {
   const user = useSelector(selectUser);
-  const langDirection = useSelector(selectCurrentLanguageDirection);
   const mainTheme = useSelector(selectMainTheme);
+  const langDirection = 'ltr'; // Hardcoded to ltr since i18n is removed
 
   return (
     <CacheProvider value={createCache(emotionCacheOptions[langDirection])}>

@@ -1,5 +1,4 @@
 import themesConfig from 'app/configs/themesConfig';
-import i18n from '../../i18n';
 
 const settingsConfig = {
   layout: {
@@ -7,7 +6,7 @@ const settingsConfig = {
     config: {}, // checkout default layout configs at app/theme-layouts for example  app/theme-layouts/layout1/Layout1Config.js
   },
   customScrollbars: true,
-  direction: i18n.dir(i18n.options.lng) || 'ltr', // rtl, ltr
+  direction: 'ltr', // rtl, ltr
   theme: {
     main: themesConfig.default,
     navbar: themesConfig.defaultDark,
@@ -19,11 +18,11 @@ const settingsConfig = {
    To make whole app accessible without authorization by default set defaultAuth: null
    *** The individual route configs which has auth option won't be overridden.
    */
-  defaultAuth: ['admin'],
+  defaultAuth: ['user'], // Changed to 'user' for Evernote clone - all authenticated users can access
   /*
     Default redirect url for the logged-in user,
    */
-  loginRedirectUrl: '/',
+  loginRedirectUrl: '/dashboard',
 };
 
 export default settingsConfig;

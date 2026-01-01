@@ -1,8 +1,11 @@
+import apiConfig from '../../../configs/apiConfig';
+
 const jwtServiceConfig = {
-  signIn: 'api/auth/sign-in',
-  signUp: 'api/auth/sign-up',
-  accessToken: 'api/auth/access-token',
-  updateUser: 'api/auth/user/update',
+  signIn: `${apiConfig.baseURL}/users/login`,
+  signUp: `${apiConfig.baseURL}/users/register`,
+  logout: `${apiConfig.baseURL}/users/logout`,
+  refreshToken: `${apiConfig.baseURL}/users/refresh-token`,
+  updateUser: `${apiConfig.baseURL}/users/profile`,
 };
 
 export default jwtServiceConfig;
