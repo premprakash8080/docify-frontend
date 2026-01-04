@@ -16,13 +16,14 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, CardFooter, CardHeader, Col, Row } from 'react-bootstrap';
 import { LuSearch, LuFlag, LuCircleCheck, LuCircle } from 'react-icons/lu';
-import { TbEdit, TbEye, TbTrash } from 'react-icons/tb';
+import { TbEdit, TbEye, TbTrash, TbPlus } from 'react-icons/tb';
 
 import ComponentCard from '@/components/cards/ComponentCard';
 import DataTable from '@/components/table/DataTable';
 import DeleteConfirmationModal from '@/components/table/DeleteConfirmationModal';
 import TablePagination from '@/components/table/TablePagination';
 import { toPascalCase } from '@/helpers/casing';
+import AddTaskDialog from './AddTaskDialog';
 import type { Task } from '../types';
 import {
   fetchTasks,
@@ -60,6 +61,9 @@ const TasksTable = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [selectedRowIds, setSelectedRowIds] = useState<Record<string, boolean>>({});
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [showAddTaskDialog, setShowAddTaskDialog] = useState<boolean>(false);
+  const [taskDialogMode, setTaskDialogMode] = useState<'add' | 'edit' | 'view'>('add');
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
 
   // Fetch tasks on mount
   useEffect(() => {
@@ -188,8 +192,9 @@ const TasksTable = () => {
             size="sm"
             className="btn-icon rounded-circle"
             onClick={() => {
-              // TODO: Implement view task
-              console.log('View task:', row.original.id);
+              setSelectedTaskId(row.original.id);
+              setTaskDialogMode('view');
+              setShowAddTaskDialog(true);
             }}
           >
             <TbEye className="fs-lg" />
@@ -199,8 +204,9 @@ const TasksTable = () => {
             size="sm"
             className="btn-icon rounded-circle"
             onClick={() => {
-              // TODO: Implement edit task
-              console.log('Edit task:', row.original.id);
+              setSelectedTaskId(row.original.id);
+              setTaskDialogMode('edit');
+              setShowAddTaskDialog(true);
             }}
           >
             <TbEdit className="fs-lg" />
@@ -294,6 +300,20 @@ const TasksTable = () => {
             </div>
 
             <div className="d-flex align-items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setSelectedTaskId(null);
+                  setTaskDialogMode('add');
+                  setShowAddTaskDialog(true);
+                }}
+                className="d-flex align-items-center gap-1"
+              >
+                <TbPlus size={18} />
+                Add Task
+              </Button>
+
               <span className="me-2 fw-semibold">Filter By:</span>
 
               <div className="app-search">
@@ -384,6 +404,17 @@ const TasksTable = () => {
             onConfirm={handleDelete}
             selectedCount={Object.keys(selectedRowIds).length}
             itemName="task"
+          />
+
+          <AddTaskDialog
+            show={showAddTaskDialog}
+            onHide={() => {
+              setShowAddTaskDialog(false);
+              setSelectedTaskId(null);
+              setTaskDialogMode('add');
+            }}
+            mode={taskDialogMode}
+            taskId={selectedTaskId}
           />
         </ComponentCard>
       </Col>

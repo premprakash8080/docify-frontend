@@ -111,25 +111,37 @@ export const userDropdownItems: UserDropdownItemType[] = [
 ]
 
 export const menuItems: MenuItemType[] = [
-  { key: 'navigation', label: 'Navigation', isTitle: true },
-  {
-    key: 'dashboards',
-    label: 'Dashboards',
-    icon: LuCircleGauge,
-    badge: { variant: 'success', text: '02' },
-    children: [
-      { key: 'dashboard-v1', label: 'Dashboard 1', url: '/dashboard' },
-      { key: 'dashboard-v2', label: 'Dashboard 2', url: '/dashboard2' },
-    ],
-  },
-  { key: 'landing', label: 'Landing Page', icon: LuEarth, url: '/landing' },
+  // { key: 'navigation', label: 'Navigation', isTitle: true },
+  // {
+  //   key: 'dashboards',
+  //   label: 'Dashboards',
+  //   icon: LuCircleGauge,
+  //   badge: { variant: 'success', text: '02' },
+  //   children: [
+  //     { key: 'dashboard-v1', label: 'Dashboard 1', url: '/dashboard' },
+  //     { key: 'dashboard-v2', label: 'Dashboard 2', url: '/dashboard2' },
+  //   ],
+  // },
+  // { key: 'landing', label: 'Landing Page', icon: LuEarth, url: '/landing' },
 
   { key: 'Main', label: 'Main', isTitle: true },
-  { key: 'home', label: 'Home', icon: LuHouse, url: '/home' },
+  { key: 'home', label: 'Home', icon: LuHouse, url: '/dashboard' },
   { key: 'notes', label: 'Notes', icon: LuNotebookText, url: '/notes' },
   { key: 'tasks', label: 'Tasks', icon: LuListTree, url: '/tasks' },
   { key: 'files', label: 'Files', icon: LuFile, url: '/files' },
-  { key: 'calendar', label: 'Calendar', icon: LuCalendar, url: '/calendar' },
+  {
+    key: 'calendar',
+    label: 'Calendar',
+    icon: LuCalendar,
+    url: (() => {
+      const today = new Date()
+      const year = today.getFullYear()
+      const month = String(today.getMonth() + 1).padStart(2, '0')
+      const day = String(today.getDate()).padStart(2, '0')
+      const dateStr = `${year}-${month}-${day}`
+      return `/calendar?view=week&date=${dateStr}`
+    })(),
+  },
   { key: 'templates', label: 'Templates', icon: LuFile, url: '/templates' },
 
   { key: 'Organize', label: 'Organize', isTitle: true },
@@ -156,7 +168,19 @@ export const horizontalMenuItems: MenuItemType[] = [
     label: 'Apps',
     icon: TbApps,
     children: [
-      { key: 'calendar', label: 'Calendar', icon: TbCalendar, url: '/calendar' },
+      {
+        key: 'calendar',
+        label: 'Calendar',
+        icon: TbCalendar,
+        url: (() => {
+          const today = new Date()
+          const year = today.getFullYear()
+          const month = String(today.getMonth() + 1).padStart(2, '0')
+          const day = String(today.getDate()).padStart(2, '0')
+          const dateStr = `${year}-${month}-${day}`
+          return `/calendar?view=week&date=${dateStr}`
+        })(),
+      },
       { key: 'chat', label: 'Chat', icon: TbMessageDots, url: '/chat' },
       { key: 'file-manager', label: 'File Manager', icon: TbFolder, url: '/file-manager' },
       {

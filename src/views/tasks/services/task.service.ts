@@ -77,6 +77,12 @@ class TaskService {
       { showLoader }
     );
 
+    // Check if API returned success: false
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && !response.data.success) {
+      const errorMsg = (response.data as { msg?: string }).msg || 'Failed to create task';
+      throw { msg: errorMsg };
+    }
+
     // Handle response format
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
       return response.data as TaskResponse;
@@ -100,6 +106,12 @@ class TaskService {
       payload,
       { showLoader }
     );
+
+    // Check if API returned success: false
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && !response.data.success) {
+      const errorMsg = (response.data as { msg?: string }).msg || 'Failed to update task';
+      throw { msg: errorMsg };
+    }
 
     // Handle response format
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {

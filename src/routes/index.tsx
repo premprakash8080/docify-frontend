@@ -6,8 +6,12 @@ const DashboardHomePage = lazy(() => import('@/views/Dashboard/DashboardHomePage
 
 const Profile = lazy(() => import('@/views/apps/users/profile'))
 const Tasks = lazy(() => import('@/views/tasks'))
+const Tags = lazy(() => import('@/views/tags'))
+const Templates = lazy(() => import('@/views/templates'))
+const Notebooks = lazy(() => import('@/views/notebooks/NotebooksPage'))
 const Files = lazy(() => import('@/views/files'))
 const FileView = lazy(() => import('@/views/files/FileView'))
+const Notes = lazy(() => import('@/views/notes'))
 const Calendar = lazy(() => import('@/views/apps/calendar'))
 
 const ComingSoon = lazy(() => import('@/views/other-pages/coming-soon'))
@@ -100,6 +104,15 @@ const appsRoutes: RouteObject[] = [
     // Tasks
     { path: '/tasks', element: <Tasks /> },
 
+    // Tags
+    { path: '/tags', element: <Tags /> },
+
+    // Templates
+    { path: '/templates', element: <Templates /> },
+
+    // Notebooks
+    { path: '/notebooks', element: <Notebooks /> },
+
     // Files
     {
         path: '/files',
@@ -109,6 +122,8 @@ const appsRoutes: RouteObject[] = [
             { path: ':id', element: <FileView /> },
         ],
     },
+    // Notes
+    { path: '/notes', element: <Notes /> },
     // Calendar
     { path: '/calendar', element: <Calendar /> },
 ]
