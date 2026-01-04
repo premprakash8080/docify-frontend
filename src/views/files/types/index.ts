@@ -3,27 +3,37 @@
  */
 
 export interface File {
-  id: number | string;
-  filename?: string;
+  id: string;
+  user_id: number;
+  note_id: string | null;
+  firebase_storage_path: string;
+  filename: string;
+  mime_type: string;
+  size: number;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  createdAt?: string;
+  updatedAt?: string;
+  // Legacy fields for backward compatibility
   name?: string;
-  description?: string | null;
-  size?: number;
   url?: string;
   file_url?: string;
-  mime_type?: string;
-  created_at?: string;
-  updated_at?: string;
-  note_id?: string | null;
 }
 
 export interface ApiResponse<T> {
   success: boolean;
-  msg: string;
+  msg?: string;
   data: T;
 }
 
-export interface FilesResponse extends ApiResponse<File[]> {
-  data: File[];
+export interface FilesResponse {
+  success: boolean;
+  msg?: string;
+  data: {
+    files: File[];
+    count: number;
+  };
 }
 
 export interface FileResponse extends ApiResponse<File> {

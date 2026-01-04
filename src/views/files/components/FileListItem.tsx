@@ -38,7 +38,7 @@ const getFileIcon = (filename?: string): React.ReactNode => {
 
 function FileListItem({ file, isLast }: FileListItemProps) {
   const routeParams = useParams();
-  const isActive = routeParams.id === file.id?.toString();
+  const isActive = routeParams.id ? String(routeParams.id) === String(file.id) : false;
 
   return (
     <ListGroup.Item

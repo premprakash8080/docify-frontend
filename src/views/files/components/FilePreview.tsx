@@ -1,11 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router';
-import { Button, Card, CardBody, Navbar, Offcanvas } from 'react-bootstrap';
+import { Button, Card, CardBody, Navbar } from 'react-bootstrap';
 import { TbMenu2, TbDownload, TbTrash, TbFileText } from 'react-icons/tb';
-import { selectFileById } from '../store/filesSlice';
+import { selectFileById, fetchFiles } from '../store/filesSlice';
+import { useDispatch } from 'react-redux';
+import { deleteFile } from '../store/filesSlice';
+import { useNavigate } from 'react-router';
+import { useNotificationContext } from '@/context/useNotificationContext';
 import fileService from '../services/file.service';
-import apiConfig from '@/configs/apiConfig';
+import type { AppDispatch } from '@/store/types';
 import type { File } from '../types';
 
 interface FilePreviewProps {
@@ -27,40 +31,78 @@ const isDocument = (file: File | undefined): boolean => {
 };
 
 function FilePreview({ setMainSidebarOpen }: FilePreviewProps) {
+  const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
+  const { showNotification } = useNotificationContext();
   const routeParams = useParams();
-  const file = useSelector((state: any) => selectFileById(state, routeParams.id));
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const file = useSelector((state: { filesApp?: { files?: { items: File[] } } }) => 
+    selectFileById(state, routeParams.id || '')
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fileUrl = useMemo(() => {
+    if (!file) return null;
+    // Use firebase_storage_path if available, otherwise fallback to other URL fields
+    return file.firebase_storage_path || file.url || file.file_url || null;
+  }, [file]);
+
+  // Fetch file if not in Redux store (e.g., direct navigation to file URL)
   useEffect(() => {
-    if (file?.id) {
+    if (routeParams.id && !file) {
       setLoading(true);
       setError(null);
       fileService
-        .getFileById(file.id)
-        .then((response) => {
-          const fileData = response.data?.data || response.data;
-          // If the API returns a URL, use it; otherwise construct it
-          if (fileData.url || fileData.file_url) {
-            setFileUrl(fileData.url || fileData.file_url);
-          } else if (fileData.id) {
-            // Construct file URL from API base and file ID
-            const apiBase = apiConfig.baseURL;
-            setFileUrl(`${apiBase}/files/${fileData.id}/download`);
-          }
+        .getFileById(routeParams.id)
+        .then(() => {
+          // File will be added to Redux after fetch, so just refresh the list
+          dispatch(fetchFiles());
           setLoading(false);
         })
-        .catch((err: any) => {
-          setError('Failed to load file');
+        .catch(() => {
+          setError('File not found');
           setLoading(false);
         });
-    } else {
-      setFileUrl(null);
-      setLoading(false);
-      setError(null);
     }
-  }, [file?.id]);
+  }, [routeParams.id, file, dispatch]);
+
+  const handleDelete = async () => {
+    if (!file?.id) return;
+    
+    if (window.confirm('Are you sure you want to delete this file?')) {
+      setLoading(true);
+      try {
+        const result = await dispatch(deleteFile(file.id));
+        if (result.type.endsWith('/fulfilled')) {
+          showNotification({
+            message: 'File deleted successfully',
+            variant: 'success',
+          });
+          dispatch(fetchFiles());
+          navigate('/files');
+        } else {
+          const errorMsg = result.payload as string || 'Failed to delete file';
+          showNotification({
+            message: errorMsg,
+            variant: 'danger',
+          });
+        }
+      } catch (err: any) {
+        showNotification({
+          message: err.message || 'An unexpected error occurred',
+          variant: 'danger',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleDownload = () => {
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
+    }
+  };
 
   if (!file) {
     return (
@@ -87,10 +129,10 @@ function FilePreview({ setMainSidebarOpen }: FilePreviewProps) {
           <h6 className="flex-fill px-3 fw-semibold mb-0" style={{ fontSize: '16px' }}>
             {file.filename || file.name || 'Untitled File'}
           </h6>
-          <Button variant="link" className="p-2">
+          <Button variant="link" className="p-2" onClick={handleDownload} disabled={!fileUrl || loading}>
             <TbDownload size={20} />
           </Button>
-          <Button variant="link" className="p-2 text-danger">
+          <Button variant="link" className="p-2 text-danger" onClick={handleDelete} disabled={loading}>
             <TbTrash size={20} />
           </Button>
         </div>
@@ -105,7 +147,17 @@ function FilePreview({ setMainSidebarOpen }: FilePreviewProps) {
               </div>
             </div>
           ) : error ? (
-            <p className="text-danger mb-0">{error}</p>
+            <div className="text-center">
+              <p className="text-danger mb-3">{error}</p>
+              {fileUrl && (
+                <a href={fileUrl} download target="_blank" rel="noopener noreferrer" className="text-decoration-none">
+                  <Button variant="primary">
+                    <TbDownload className="me-1" />
+                    Download
+                  </Button>
+                </a>
+              )}
+            </div>
           ) : isImage(file) && fileUrl ? (
             <img
               src={fileUrl}

@@ -84,10 +84,10 @@ const filesSlice = createSlice({
       .addCase(fetchFiles.fulfilled, (state, action) => {
         state.loading = false;
         const payload = action.payload;
-        if (payload?.data && Array.isArray(payload.data)) {
+        if (payload?.data?.files && Array.isArray(payload.data.files)) {
+          state.items = payload.data.files;
+        } else if (payload?.data && Array.isArray(payload.data)) {
           state.items = payload.data;
-        } else if (Array.isArray(payload)) {
-          state.items = payload;
         } else {
           state.items = [];
         }
@@ -98,20 +98,23 @@ const filesSlice = createSlice({
       })
       // Upload file
       .addCase(uploadFile.fulfilled, (state, action) => {
-        const newFile = action.payload?.data || action.payload;
-        if (newFile) {
+        const payload = action.payload;
+        const newFile = payload?.data?.file || payload?.data || payload;
+        if (newFile && typeof newFile === 'object' && 'id' in newFile) {
           state.items.unshift(newFile as File);
         }
       })
       // Delete file
       .addCase(deleteFile.fulfilled, (state, action) => {
-        state.items = state.items.filter((file) => file.id !== action.payload);
+        const fileId = action.payload;
+        state.items = state.items.filter((file) => String(file.id) !== String(fileId));
       })
       // Update file metadata
       .addCase(updateFileMetadata.fulfilled, (state, action) => {
-        const updatedFile = action.payload?.data || action.payload;
-        if (updatedFile) {
-          const index = state.items.findIndex((file) => file.id === (updatedFile as File).id);
+        const payload = action.payload;
+        const updatedFile = payload?.data?.file || payload?.data || payload;
+        if (updatedFile && typeof updatedFile === 'object' && 'id' in updatedFile) {
+          const index = state.items.findIndex((file) => String(file.id) === String((updatedFile as File).id));
           if (index !== -1) {
             state.items[index] = updatedFile as File;
           }
@@ -129,8 +132,13 @@ export const selectFilesLoading = (state: { filesApp?: { files?: FilesState } })
   return state.filesApp?.files?.loading || false;
 };
 
-export const selectFileById = (state: { filesApp?: { files?: FilesState } }, fileId: number | string): File | undefined => {
-  return state.filesApp?.files?.items?.find((file) => file.id === fileId);
+export const selectFilesError = (state: { filesApp?: { files?: FilesState } }): string | null => {
+  return state.filesApp?.files?.error || null;
+};
+
+export const selectFileById = (state: { filesApp?: { files?: FilesState } }, fileId: string | number): File | undefined => {
+  const items = state.filesApp?.files?.items || [];
+  return items.find((file) => String(file.id) === String(fileId));
 };
 
 export default filesSlice.reducer;

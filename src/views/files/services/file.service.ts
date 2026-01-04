@@ -17,7 +17,7 @@ class FileService {
    * @returns Files response
    */
   async getAllFiles(showLoader = true): Promise<FilesResponse> {
-    const response = await httpService.get<File[]>(FILE_ENDPOINTS.getAllFiles, { showLoader });
+    const response = await httpService.get<{ files: File[]; count: number }>(FILE_ENDPOINTS.getAllFiles, { showLoader });
 
     // Handle response format
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
@@ -26,7 +26,10 @@ class FileService {
     return {
       success: true,
       msg: 'Files fetched successfully',
-      data: Array.isArray(response.data) ? response.data : [],
+      data: {
+        files: Array.isArray(response.data?.files) ? response.data.files : (Array.isArray(response.data) ? response.data : []),
+        count: response.data?.count || 0,
+      },
     };
   }
 
@@ -37,11 +40,23 @@ class FileService {
    * @returns File response
    */
   async getFileById(fileId: number | string, showLoader = true): Promise<FileResponse> {
-    const response = await httpService.get<File>(FILE_ENDPOINTS.getFileById(fileId), { showLoader });
+    const response = await httpService.get<{ file: File } | File>(FILE_ENDPOINTS.getFileById(fileId), { showLoader });
 
     // Handle response format
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      return response.data as FileResponse;
+      const responseData = response.data as { data: { file?: File } | File };
+      if ('file' in responseData.data) {
+        return {
+          success: true,
+          msg: 'File fetched successfully',
+          data: (responseData.data as { file: File }).file,
+        };
+      }
+      return {
+        success: true,
+        msg: 'File fetched successfully',
+        data: responseData.data as File,
+      };
     }
     return {
       success: true,
