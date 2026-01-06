@@ -17,14 +17,54 @@ interface NotesListProps {
   sortBy?: string;
   onNotesCountChange?: (count: number) => void;
   onNoteClick?: (note: Note) => void;
+  notes?: Note[]; // Pre-fetched notes (overrides internal fetching)
+  loading?: boolean; // Loading state from parent
+  error?: string | null; // Error state from parent
 }
 
-const NotesList = ({ filter, sortBy = 'updated', onNotesCountChange, onNoteClick }: NotesListProps) => {
+const NotesList = ({ 
+  filter, 
+  sortBy = 'updated', 
+  onNotesCountChange, 
+  onNoteClick,
+  notes: providedNotes,
+  loading: providedLoading,
+  error: providedError
+}: NotesListProps) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Use provided notes/loading/error if available, otherwise fetch internally
+  const useProvidedData = providedNotes !== undefined;
+
   useEffect(() => {
+    // If notes are provided, use them and skip fetching
+    if (useProvidedData) {
+      if (providedNotes) {
+        // Sort provided notes
+        const sortedNotes = [...providedNotes].sort((a, b) => {
+          if (sortBy === 'title-asc') {
+            return (a.title || '').localeCompare(b.title || '');
+          } else if (sortBy === 'updated') {
+            return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+          } else if (sortBy === 'created') {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          }
+          return 0;
+        });
+        setNotes(sortedNotes);
+        onNotesCountChange?.(sortedNotes.length);
+      } else {
+        setNotes([]);
+        onNotesCountChange?.(0);
+      }
+      setLoading(providedLoading || false);
+      setError(providedError || null);
+      return;
+    }
+
+    // Otherwise, fetch notes internally
     const fetchNotes = async () => {
       setLoading(true);
       setError(null);
@@ -67,9 +107,13 @@ const NotesList = ({ filter, sortBy = 'updated', onNotesCountChange, onNoteClick
     };
 
     fetchNotes();
-  }, [filter, sortBy, onNotesCountChange]);
+  }, [filter, sortBy, onNotesCountChange, useProvidedData, providedNotes, providedLoading, providedError]);
 
-  if (loading) {
+  // Use provided loading/error state when available
+  const displayLoading = useProvidedData ? providedLoading : loading;
+  const displayError = useProvidedData ? providedError : error;
+
+  if (displayLoading) {
     return (
       <Card className="mt-3">
         <CardBody className="text-center py-3">
@@ -79,7 +123,7 @@ const NotesList = ({ filter, sortBy = 'updated', onNotesCountChange, onNoteClick
     );
   }
 
-  if (error) {
+  if (displayError) {
     return (
       <Card className="mt-3">
         <CardBody className="text-center py-3">

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { Button, CardBody } from 'react-bootstrap'
 import SimpleBar from 'simplebar-react'
 import NotesList from './NotesList'
@@ -7,12 +7,52 @@ import type { Note } from '../types'
 
 interface SideBarProps {
   onNoteClick?: (note: Note) => void
+  onNewNote?: () => void
+  notebookId?: string
+  stackId?: string
+  tagId?: string
+  routeType?: 'dashboard' | 'new' | 'tag' | 'stack' | 'notebook' | 'note' | 'unknown'
+  filteredNotes?: Note[]
+  loadingNotes?: boolean
+  notesError?: string | null
 }
 
-const SideBar = ({ onNoteClick }: SideBarProps) => {
+const SideBar = ({ 
+  onNoteClick,
+  onNewNote,
+  notebookId, 
+  stackId, 
+  tagId, 
+  routeType,
+  filteredNotes,
+  loadingNotes = false,
+  notesError = null
+}: SideBarProps) => {
   const [activeFilter, setActiveFilter] = useState<any>(null)
   const [sortBy, setSortBy] = useState<string>('updated')
   const [notesCount, setNotesCount] = useState<number>(0)
+  
+  // Build filter based on URL context (used if filteredNotes not provided)
+  const contextFilter = useMemo(() => {
+    const filter: any = {}
+    if (notebookId) {
+      filter.notebook_id = notebookId
+    }
+    if (stackId) {
+      filter.stack_id = stackId
+    }
+    if (tagId) {
+      filter.tag_id = tagId
+    }
+    return Object.keys(filter).length > 0 ? filter : null
+  }, [notebookId, stackId, tagId])
+
+  // Update notes count when filtered notes change
+  useEffect(() => {
+    if (filteredNotes) {
+      setNotesCount(filteredNotes.length)
+    }
+  }, [filteredNotes])
 
   const handleFilterClick = useCallback((type: string) => {
     if (type === 'pinned') {
@@ -30,10 +70,11 @@ const SideBar = ({ onNoteClick }: SideBarProps) => {
     setSortBy(sortType)
   }, [])
 
-  const handleNewNote = useCallback(() => {
-    // TODO: Implement new note creation
-    console.log('Create new note')
-  }, [])
+  const handleNewNoteClick = useCallback(() => {
+    if (onNewNote) {
+      onNewNote()
+    }
+  }, [onNewNote])
 
   const handleShareNotebook = useCallback(() => {
     // TODO: Implement share notebook
@@ -53,7 +94,7 @@ const SideBar = ({ onNoteClick }: SideBarProps) => {
   return (
     <SimpleBar className="card h-100 mb-0 rounded-0 border-0">
       <CardBody>
-        <Button variant="primary" className="fw-medium w-100 mb-3">
+        <Button variant="primary" className="fw-medium w-100 mb-3" onClick={handleNewNoteClick}>
           New Note
         </Button>
 
@@ -63,7 +104,7 @@ const SideBar = ({ onNoteClick }: SideBarProps) => {
           count={notesCount}
           onFilterClick={handleFilterClick}
           onSortClick={handleSortClick}
-          onNewNote={handleNewNote}
+          onNewNote={handleNewNoteClick}
           onShareNotebook={handleShareNotebook}
           onRenameNotebook={handleRenameNotebook}
           onAddToShortcuts={handleAddToShortcuts}
@@ -71,10 +112,13 @@ const SideBar = ({ onNoteClick }: SideBarProps) => {
 
         {/* Notes */}
         <NotesList 
-          filter={activeFilter} 
+          filter={filteredNotes ? undefined : (activeFilter || contextFilter)} 
           sortBy={sortBy}
           onNotesCountChange={setNotesCount}
           onNoteClick={onNoteClick}
+          notes={filteredNotes}
+          loading={loadingNotes}
+          error={notesError}
         />
       </CardBody>
     </SimpleBar>

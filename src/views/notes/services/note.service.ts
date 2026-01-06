@@ -82,38 +82,48 @@ class NoteService {
   async getNoteById(
     id: string,
     showLoader = true
-  ): Promise<Note> {
-    const response = await httpService.post<{ success: boolean; data: { note: Note } }>(
-      NOTES_ENDPOINTS.getNoteById,
-      { id },
+  ): Promise<NoteResponse | Note> {
+    const response = await httpService.get<Note>(
+      `${NOTES_ENDPOINTS.getNoteById}?id=${id}`,
       { showLoader }
     );
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      const data = (response.data as { data: { note: Note } }).data;
-      if (data && typeof data === 'object' && 'note' in data) {
-        return data.note;
-      }
-    }
-    return response.data as unknown as Note;
+    return response.data;
   }
 
   async createNote(
     data: CreateNotePayload = {},
     showLoader = true
-  ): Promise<NoteResponse | Note> {
-    const response = await httpService.post<Note>(
+  ): Promise<NoteResponse | Note | { success: boolean; msg: string; data: { note: Note } }> {
+    const response = await httpService.post<
+      Note | 
+      { success: boolean; msg: string; data: { note: Note } }
+    >(
       NOTES_ENDPOINTS.createNote,
       {
-        title: data.title || 'Untitled Note',
+        title: data.title || 'Untitled',
         notebook_id: data.notebook_id || null,
         firebase_document_id: data.firebase_document_id || null,
         content: data.content || '',
       },
       { showLoader }
     );
-    if ('data' in response.data && typeof (response.data as NoteResponse).data === 'object') {
-      return (response.data as NoteResponse).data;
+    
+    // Handle new response format: { success: true, msg: "...", data: { note: {...} } }
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+      return response.data as { success: boolean; msg: string; data: { note: Note } };
     }
+    
+    // Handle legacy NoteResponse format
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      const responseData = response.data as any;
+      if (responseData.data && typeof responseData.data === 'object' && 'id' in responseData.data) {
+        return responseData.data as Note;
+      }
+      if (typeof responseData.data === 'object') {
+        return responseData as NoteResponse;
+      }
+    }
+    
     return response.data as Note;
   }
 
@@ -251,23 +261,39 @@ class NoteService {
   async getNoteContent(
     id: string,
     showLoader = true
-  ): Promise<NoteContentResponse | string> {
+  ): Promise<NoteContentResponse | string | { success: boolean; data: { note: Note; tags: any[]; stack_name: string | null } }> {
     const queryParams = new URLSearchParams();
     queryParams.append('id', id);
     const url = `${NOTES_ENDPOINTS.getNoteContent}?${queryParams.toString()}`;
-    const response = await httpService.get<{ content: string; note_id: string } | string>(url, { showLoader });
+    const response = await httpService.get<
+      string | 
+      { content: string; note_id: string } | 
+      { success: boolean; data: { note: Note; tags: any[]; stack_name: string | null } }
+    >(url, { showLoader });
+    
+    // Handle new response format: { success: true, data: { note: {...}, tags: [], stack_name: null } }
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+      return response.data as { success: boolean; data: { note: Note; tags: any[]; stack_name: string | null } };
+    }
+    
+    // Handle legacy string format
     if (typeof response.data === 'string') {
       return response.data;
     }
+    
+    // Handle { content: string } format
     if (response.data && typeof response.data === 'object' && 'content' in response.data) {
       return (response.data as { content: string }).content;
     }
+    
+    // Handle nested data structure
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
       const data = (response.data as NoteContentResponse).data;
       if (typeof data === 'string') {
         return data;
       }
     }
+    
     return '';
   }
 

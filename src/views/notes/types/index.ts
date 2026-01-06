@@ -218,8 +218,8 @@ export interface UploadImagePayload {
 
 export interface FetchNotesParams {
   tag_id?: number;
-  stack_id?: number;
-  notebook_id?: string;
+  stack_id?: string; // UUID
+  notebook_id?: string; // UUID
   archived?: boolean;
   trashed?: boolean;
   pinned?: boolean;

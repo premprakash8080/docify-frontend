@@ -18,15 +18,19 @@ import {
 import StackActionsMenu from './StackActionsMenu';
 import NotebookActionsMenu from './NotebookActionsMenu';
 import NoteActionsMenu from './NoteActionsMenu';
+import { useNotebooksNavigation } from '../utils/navigation';
 import type { StackWithNotebooks, NotebookWithNotes } from '../types';
 import type { Note } from '@/views/Dashboard/types';
 import type { AppDispatch } from '@/store/types';
 
 interface StackRowProps {
   stack: StackWithNotebooks;
+  onStackNameClick: (stack: StackWithNotebooks, isExpanded: boolean, onExpand: () => void) => void;
+  onNotebookClick: (notebook: NotebookWithNotes) => void;
+  onNoteClick: (note: Note) => void;
 }
 
-function StackRow({ stack }: StackRowProps) {
+function StackRow({ stack, onStackNameClick, onNotebookClick, onNoteClick }: StackRowProps) {
   const dispatch: AppDispatch = useDispatch();
   const expandedStacks = useSelector(selectExpandedStacks);
   const isExpanded = expandedStacks[stack.id] || false;
@@ -34,6 +38,11 @@ function StackRow({ stack }: StackRowProps) {
 
   const handleToggle = () => {
     dispatch(toggleStackExpanded(stack.id));
+  };
+
+  const handleStackNameClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onStackNameClick(stack, isExpanded, handleToggle);
   };
 
   const formatDate = (dateString?: string) => {
@@ -61,7 +70,13 @@ function StackRow({ stack }: StackRowProps) {
         <td>
           <div className="d-flex align-items-center gap-2">
             <TbFolder size={20} className="text-primary" />
-            <span className="fw-medium">{stack.name || 'Untitled Stack'}</span>
+            <span
+              className="fw-medium"
+              style={{ cursor: 'pointer' }}
+              onClick={handleStackNameClick}
+            >
+              {stack.name || 'Untitled Stack'}
+            </span>
             {notebooks.length > 0 && (
               <span className="text-muted small">{notebooks.length}</span>
             )}
@@ -79,7 +94,13 @@ function StackRow({ stack }: StackRowProps) {
       </tr>
       {isExpanded && notebooks.length > 0 && (
         notebooks.map((notebook) => (
-          <NotebookRow key={notebook.id} notebook={notebook} level={1} />
+          <NotebookRow
+            key={notebook.id}
+            notebook={notebook}
+            level={1}
+            onNotebookClick={onNotebookClick}
+            onNoteClick={onNoteClick}
+          />
         ))
       )}
       {isExpanded && notebooks.length === 0 && (
@@ -96,9 +117,11 @@ function StackRow({ stack }: StackRowProps) {
 interface NotebookRowProps {
   notebook: NotebookWithNotes;
   level?: number;
+  onNotebookClick: (notebook: NotebookWithNotes) => void;
+  onNoteClick?: (note: Note) => void;
 }
 
-function NotebookRow({ notebook, level = 0 }: NotebookRowProps) {
+function NotebookRow({ notebook, level = 0, onNotebookClick, onNoteClick }: NotebookRowProps) {
   const dispatch: AppDispatch = useDispatch();
   const expandedNotebooks = useSelector(selectExpandedNotebooks);
   const isExpanded = expandedNotebooks[notebook.id] || false;
@@ -110,6 +133,11 @@ function NotebookRow({ notebook, level = 0 }: NotebookRowProps) {
       await dispatch(fetchNotebookNotes(notebook.id));
     }
     dispatch(toggleNotebookExpanded(notebook.id));
+  };
+
+  const handleNotebookNameClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onNotebookClick(notebook);
   };
 
   const formatDate = (dateString?: string) => {
@@ -140,8 +168,15 @@ function NotebookRow({ notebook, level = 0 }: NotebookRowProps) {
         <td>
           <div className="d-flex align-items-center gap-2">
             <TbFileText size={20} className="text-muted" />
-            <span>{notebook.name || 'Untitled Notebook'}</span>
-            {notes.length > 0 && <span className="text-muted small">{notes.length}</span>}
+            <span
+              style={{ cursor: 'pointer' }}
+              onClick={handleNotebookNameClick}
+            >
+              {notebook.name || 'Untitled Notebook'}
+            </span>
+            {(notebook.note_count !== undefined && notebook.note_count !== null) && (
+              <span className="text-muted small">{notebook.note_count}</span>
+            )}
           </div>
         </td>
         <td>--</td>
@@ -155,7 +190,14 @@ function NotebookRow({ notebook, level = 0 }: NotebookRowProps) {
         </td>
       </tr>
       {isExpanded && notes.length > 0 && (
-        notes.map((note) => <NoteRow key={note.id} note={note} level={2} />)
+        notes.map((note) => (
+          <NoteRow
+            key={note.id}
+            note={note}
+            level={2}
+            onNoteClick={onNoteClick}
+          />
+        ))
       )}
       {isExpanded && notes.length === 0 && (
         <tr>
@@ -171,15 +213,23 @@ function NotebookRow({ notebook, level = 0 }: NotebookRowProps) {
 interface NoteRowProps {
   note: Note;
   level?: number;
+  onNoteClick?: (note: Note) => void;
 }
 
-function NoteRow({ note, level = 2 }: NoteRowProps) {
+function NoteRow({ note, level = 2, onNoteClick }: NoteRowProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     try {
       return format(new Date(dateString), 'dd MMM');
     } catch {
       return '-';
+    }
+  };
+
+  const handleNoteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onNoteClick) {
+      onNoteClick(note);
     }
   };
 
@@ -192,7 +242,11 @@ function NoteRow({ note, level = 2 }: NoteRowProps) {
       <td>
         <div className="d-flex align-items-center gap-2">
           <TbFile size={20} className="text-muted" />
-          <span className="text-truncate" style={{ maxWidth: '400px' }}>
+          <span
+            className="text-truncate"
+            style={{ maxWidth: '400px', cursor: onNoteClick ? 'pointer' : 'default' }}
+            onClick={handleNoteClick}
+          >
             {note.title || 'Untitled'}
           </span>
         </div>
@@ -216,6 +270,9 @@ export default function NotebooksTable() {
   const standaloneNotebooks = useSelector(selectStandaloneNotebooks);
   const loading = useSelector(selectNotebooksLoading);
   const searchText = useSelector((state: any) => state.notebooksApp?.notebooks?.searchText || '');
+
+  // Get navigation handlers
+  const navigation = useNotebooksNavigation(stacks);
 
   useEffect(() => {
     // Fetch both stacks and notebooks in parallel
@@ -278,10 +335,22 @@ export default function NotebooksTable() {
         </thead>
         <tbody>
           {filteredStacks.map((stack) => (
-            <StackRow key={stack.id} stack={stack} />
+            <StackRow
+              key={stack.id}
+              stack={stack}
+              onStackNameClick={navigation.onStackNameClick}
+              onNotebookClick={navigation.onNotebookClick}
+              onNoteClick={navigation.onNoteClick}
+            />
           ))}
           {filteredStandaloneNotebooks.map((notebook) => (
-            <NotebookRow key={notebook.id} notebook={notebook} level={0} />
+            <NotebookRow
+              key={notebook.id}
+              notebook={notebook}
+              level={0}
+              onNotebookClick={navigation.onNotebookClick}
+              onNoteClick={navigation.onNoteClick}
+            />
           ))}
           {filteredStacks.length === 0 && filteredStandaloneNotebooks.length === 0 && !loading && (
             <tr>

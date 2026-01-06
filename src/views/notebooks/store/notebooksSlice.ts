@@ -1,7 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import notebookService from '../services/notebook.service';
-import noteService from '@/views/Dashboard/services/note.service';
 import type {
   NotebooksState,
   CreateStackPayload,
@@ -53,8 +52,10 @@ export const fetchNotebookNotes = createAsyncThunk(
   'notebooks/fetchNotebookNotes',
   async (notebookId: string, { rejectWithValue }) => {
     try {
-      const response = await noteService.getAllNotes({ notebook_id: notebookId });
-      return { notebookId, data: response };
+      const response = await notebookService.getNotebookNotesById(notebookId);
+      // Extract notes from response structure: { success: true, data: { notebook: {...}, notes: [...], count: 1 } }
+      const notes = response.data?.data?.notes || [];
+      return { notebookId, data: notes };
     } catch (error: any) {
       return rejectWithValue(error.msg || error.message || 'Failed to fetch notes');
     }

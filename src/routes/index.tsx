@@ -122,8 +122,26 @@ const appsRoutes: RouteObject[] = [
             { path: ':id', element: <FileView /> },
         ],
     },
-    // Notes
-    { path: '/notes', element: <Notes /> },
+    // Notes - Support nested routes with proper priority
+    // Static routes must come before dynamic routes
+    {
+        path: '/notes',
+        children: [
+            { index: true, element: <Navigate to="/notes/dashboard" replace /> },
+            { path: 'dashboard', element: <Notes /> },
+            { path: 'new', element: <Notes /> },
+            { path: 'tags/:tagId', element: <Notes /> },
+            // Stack routes (priority over notebook routes)
+            { path: 'stack/:stackId/notebooks', element: <Notes /> },
+            { path: 'stack/:stackId/notebook/:notebookId/notes', element: <Notes /> },
+            { path: 'stack/:stackId/notebook/:notebookId/note/:noteId', element: <Notes /> },
+            // Notebook routes (only if not in stack)
+            { path: 'notebook/:notebookId/notes', element: <Notes /> },
+            { path: 'notebook/:notebookId/note/:noteId', element: <Notes /> },
+            // Single note (no context) - must be last to avoid conflicts
+            { path: ':noteId', element: <Notes /> },
+        ],
+    },
     // Calendar
     { path: '/calendar', element: <Calendar /> },
 ]

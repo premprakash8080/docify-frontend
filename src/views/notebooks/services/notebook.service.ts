@@ -34,6 +34,21 @@ class NotebookService {
     return httpService.get(ENDPOINTS.getNotebookNotes(notebookId), { showLoader });
   }
 
+  getNotebookNotesById(notebookId: string, showLoader = true) {
+    return httpService.get<{
+      success: boolean;
+      data: {
+        notebook: {
+          id: string;
+          name: string;
+          description: string | null;
+        };
+        notes: any[];
+        count: number;
+      };
+    }>(`${ENDPOINTS.getNotebookNotesById}?id=${notebookId}`, { showLoader });
+  }
+
   createStack(data: CreateStackPayload, showLoader = true) {
     return httpService.post<{ stack: Stack }>(ENDPOINTS.createStack, data, { showLoader });
   }
