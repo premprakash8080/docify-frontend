@@ -5,11 +5,11 @@ type PageMetaDataProps = {
 }
 
 const defaultPageMetaData: PageMetaDataProps = {
-  title: 'Ubold React',
+  title: 'Docify',
   description:
-    'UBold is a modern, responsive admin dashboard available on ThemeForest. Ideal for building CRM, CMS, project management tools, and custom web applications with a clean UI, flexible layouts, and rich features.',
+    'Docify is a modern document management system. Ideal for organizing notes, files, notebooks, and managing your documents with a clean UI, flexible layouts, and rich features.',
   keywords:
-    'UBold, admin dashboard, ThemeForest, Bootstrap 5 admin, responsive admin, CRM dashboard, CMS admin, web app UI, admin theme, premium admin template',
+    'Docify, document management, notes, files, notebooks, document organization, productivity, note-taking, file management',
 }
 
 const PageMetaData = ({ title, description = defaultPageMetaData.description, keywords = defaultPageMetaData.keywords }: PageMetaDataProps) => {

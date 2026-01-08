@@ -188,8 +188,7 @@ const Overflow = () => {
           This is an example of using <code>.overflow-hidden</code> on an element with set width and height dimensions.
         </div>
         <div className="overflow-visible p-3 bg-light" style={{ maxWidth: 260, maxHeight: 100 }}>
-          This is an example of using <code>.overflow-visible</code> on an element with set width and height add more text dimensions ubold admin
-          dashboard template.
+          This is an example of using <code>.overflow-visible</code> on an element with set width and height add more text dimensions.
         </div>
         <div className="overflow-scroll p-3 bg-light" style={{ maxWidth: 260, maxHeight: 100 }}>
           This is an example of using <code>.overflow-scroll</code> on an element with set width and height dimensions.

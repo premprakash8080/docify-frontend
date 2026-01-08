@@ -98,7 +98,7 @@ const Index = () => {
                 </div>
               </div>
               <p className="text-center text-muted mt-auto mb-0">
-                © {currentYear} UBold — by <span className="fw-semibold">Coderthemes</span>
+                © {currentYear} Docify
               </p>
             </CardBody>
           </Card>
