@@ -144,6 +144,10 @@ const appsRoutes: RouteObject[] = [
     },
     // Calendar
     { path: '/calendar', element: <Calendar /> },
+
+    // Coming Soon routes
+    { path: '/shared-with-me', element: <ComingSoon /> },
+    { path: '/spaces', element: <ComingSoon /> },
 ]
 
 
