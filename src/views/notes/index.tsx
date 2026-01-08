@@ -15,7 +15,8 @@ import ClipboardImageHandler from './components/ClipboardImageHandler'
 import noteService from './services/note.service'
 import { useNoteNavigation, handleRouteParams } from './utils/navigation'
 import { useNotificationContext } from '@/context/useNotificationContext'
-import type { Note } from './types'
+import type { Note, NoteResponse, NoteContent } from './types'
+import './NotesEditor.css'
 
 // Custom image handler for deletion support
 const setupImageHandler = (quill: any) => {
@@ -269,7 +270,14 @@ const Index = () => {
                         if (data && typeof data === 'object' && 'note' in data) {
                             // Full note structure: { success: true, data: { note: {...}, tags: [], stack_name: null } }
                             noteData = data.note as Note
-                            contentText = noteData.content || ''
+                            // Handle content as string or NoteContent object
+                            if (typeof noteData.content === 'string') {
+                                contentText = noteData.content
+                            } else if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                                contentText = (noteData.content as NoteContent).content || ''
+                            } else {
+                                contentText = ''
+                            }
                         }
                     } else if (typeof response === 'string') {
                         // Direct content string - need to get note metadata separately
@@ -617,7 +625,14 @@ const Index = () => {
                 if (data && typeof data === 'object' && 'note' in data) {
                     // Full note structure
                     noteData = data.note as Note
-                    contentText = noteData.content || ''
+                    // Handle content as string or NoteContent object
+                    if (typeof noteData.content === 'string') {
+                        contentText = noteData.content
+                    } else if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                        contentText = (noteData.content as NoteContent).content || ''
+                    } else {
+                        contentText = ''
+                    }
                     setSelectedNote(noteData)
                     selectedNoteRef.current = noteData
                     setNoteTitle(noteData.title || '')
@@ -858,131 +873,6 @@ const Index = () => {
                                         }}
                                     />
                                 </div>
-                                <style>{`
-                                    /* Note Editor Theme Support */
-                                    .note-editor-wrapper {
-                                        min-height: 100%;
-                                        width: 100%;
-                                    }
-                                    
-                                    /* Light Theme (Default) */
-                                    .note-editor-wrapper .ql-container {
-                                        font-family: inherit;
-                                        font-size: 1rem;
-                                        background: #ffffff;
-                                        color: #212529;
-                                        border: none;
-                                    }
-                                    
-                                    .note-editor-wrapper .ql-editor {
-                                        min-height: 400px;
-                                        padding: 2rem;
-                                        line-height: 1.6;
-                                    }
-                                    
-                                    /* Title Block Styling - First H1 */
-                                    .note-editor-wrapper .ql-editor h1.note-title-block {
-                                        font-size: 1.75rem;
-                                        font-weight: 600;
-                                        line-height: 1.3;
-                                        margin: 0 0 1.5rem 0;
-                                        padding: 0.5rem 0;
-                                        border-bottom: 1px solid #e9ecef;
-                                        color: #212529;
-                                        outline: none;
-                                        max-width: 100%;
-                                        overflow: hidden;
-                                        text-overflow: ellipsis;
-                                        white-space: nowrap;
-                                    }
-                                    
-                                    .note-editor-wrapper .ql-editor h1.note-title-block:empty::before {
-                                        content: 'Title';
-                                        color: #adb5bd;
-                                        font-weight: 400;
-                                    }
-                                    
-                                    .note-editor-wrapper .ql-editor h1.note-title-block:focus {
-                                        outline: none;
-                                        border-bottom-color: #0d6efd;
-                                    }
-                                    
-                                    /* Content Area Styling - Everything after title */
-                                    .note-editor-wrapper .ql-editor > *:not(h1.note-title-block) {
-                                        margin-bottom: 1rem;
-                                    }
-                                    
-                                    .note-editor-wrapper .ql-editor p {
-                                        margin-bottom: 1rem;
-                                    }
-                                    
-                                    /* Dark Theme Support */
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-container,
-                                    .dark .note-editor-wrapper .ql-container {
-                                        background: #1e1e1e;
-                                        color: #e9ecef;
-                                    }
-                                    
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-editor h1.note-title-block,
-                                    .dark .note-editor-wrapper .ql-editor h1.note-title-block {
-                                        color: #ffffff;
-                                        border-bottom-color: #3a3a3a;
-                                    }
-                                    
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-editor h1.note-title-block:empty::before,
-                                    .dark .note-editor-wrapper .ql-editor h1.note-title-block:empty::before {
-                                        color: #6c757d;
-                                    }
-                                    
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-editor h1.note-title-block:focus,
-                                    .dark .note-editor-wrapper .ql-editor h1.note-title-block:focus {
-                                        border-bottom-color: #0d6efd;
-                                    }
-                                    
-                                    /* Toolbar Theme Support */
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-toolbar,
-                                    .dark .note-editor-wrapper .ql-toolbar {
-                                        background: #2d2d2d;
-                                        border-color: #3a3a3a;
-                                    }
-                                    
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-toolbar .ql-stroke,
-                                    .dark .note-editor-wrapper .ql-toolbar .ql-stroke {
-                                        stroke: #e9ecef;
-                                    }
-                                    
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-toolbar .ql-fill,
-                                    .dark .note-editor-wrapper .ql-toolbar .ql-fill {
-                                        fill: #e9ecef;
-                                    }
-                                    
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-toolbar button:hover,
-                                    [data-bs-theme="dark"] .note-editor-wrapper .ql-toolbar button.ql-active,
-                                    .dark .note-editor-wrapper .ql-toolbar button:hover,
-                                    .dark .note-editor-wrapper .ql-toolbar button.ql-active {
-                                        background: #3a3a3a;
-                                    }
-                                    
-                                    /* Smooth transitions */
-                                    .note-editor-wrapper .ql-editor {
-                                        transition: background-color 0.2s ease, color 0.2s ease;
-                                    }
-                                    
-                                    /* Focus states */
-                                    .note-editor-wrapper .ql-editor:focus {
-                                        outline: none;
-                                    }
-                                    
-                                    /* Ensure proper spacing and typography */
-                                    .note-editor-wrapper .ql-editor {
-                                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                                    }
-                                    
-                                    /* Prevent title from wrapping to multiple lines */
-                                    .note-editor-wrapper .ql-editor h1.note-title-block br {
-                                        display: none;
-                                    }
-                                `}</style>
                             </div>
                         )}
                     </SimpleBar>

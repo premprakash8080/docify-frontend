@@ -1,0 +1,97 @@
+/* Note Editor Theme Support */
+.note-editor-wrapper {
+    min-height: 100%;
+    width: 100%;
+}
+
+/* Light Theme (Default) */
+.note-editor-wrapper .ql-container {
+    font-family: inherit;
+    font-size: 1rem;
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border: none;
+}
+
+.note-editor-wrapper .ql-editor {
+    min-height: 400px;
+    padding: 2rem;
+    line-height: 1.6;
+}
+
+/* Title Block Styling - First H1 */
+.note-editor-wrapper .ql-editor h1.note-title-block {
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 1.5rem 0;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+    outline: none;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.note-editor-wrapper .ql-editor h1.note-title-block:empty::before {
+    content: 'Title';
+    color: var(--bs-secondary-color);
+    font-weight: 400;
+}
+
+.note-editor-wrapper .ql-editor h1.note-title-block:focus {
+    outline: none;
+    border-bottom-color: var(--bs-primary);
+}
+
+/* Content Area Styling - Everything after title */
+.note-editor-wrapper .ql-editor > *:not(h1.note-title-block) {
+    margin-bottom: 1rem;
+}
+
+.note-editor-wrapper .ql-editor p {
+    margin-bottom: 1rem;
+}
+
+/* Dark Theme Support - Bootstrap variables automatically handle theme switching */
+
+/* Toolbar Theme Support */
+.note-editor-wrapper .ql-toolbar {
+    background: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+}
+
+.note-editor-wrapper .ql-toolbar .ql-stroke {
+    stroke: var(--bs-body-color);
+}
+
+.note-editor-wrapper .ql-toolbar .ql-fill {
+    fill: var(--bs-body-color);
+}
+
+.note-editor-wrapper .ql-toolbar button:hover,
+.note-editor-wrapper .ql-toolbar button.ql-active {
+    background: var(--bs-secondary-bg);
+}
+
+/* Smooth transitions */
+.note-editor-wrapper .ql-editor {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Focus states */
+.note-editor-wrapper .ql-editor:focus {
+    outline: none;
+}
+
+/* Ensure proper spacing and typography */
+.note-editor-wrapper .ql-editor {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Prevent title from wrapping to multiple lines */
+.note-editor-wrapper .ql-editor h1.note-title-block br {
+    display: none;
+}
