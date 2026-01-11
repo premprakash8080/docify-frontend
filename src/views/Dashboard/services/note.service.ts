@@ -26,11 +26,12 @@ class NoteService {
    * Get all notes with optional filters
    * @param params - Query parameters for filtering notes
    * @param showLoader - Whether to show global loader (default: true)
+   * @returns Notes response: { success: true, data: { notes: Note[] } } or Note[]
    */
   async getAllNotes(
     params: FetchNotesParams = {},
     showLoader = true
-  ): Promise<NotesResponse | Note[]> {
+  ): Promise<NotesResponse | Note[] | { success: boolean; data: { notes: Note[] } }> {
     const queryParams = new URLSearchParams();
     if (params.notebook_id) queryParams.append('notebook_id', params.notebook_id);
     if (params.tag_id) queryParams.append('tag_id', params.tag_id.toString());
@@ -41,12 +42,21 @@ class NoteService {
     const queryString = queryParams.toString();
     const url = queryString ? `${ENDPOINTS.getAllNotes}?${queryString}` : ENDPOINTS.getAllNotes;
 
-    const response = await httpService.get<Note[]>(url, { showLoader });
+    const response = await httpService.get<{ success: boolean; data: { notes: Note[] } } | Note[]>(url, { showLoader });
     
-    // Handle both response formats: { success, data } or direct array
+    // API response format: { success: true, data: { notes: Note[] } }
+    // Handle both response formats: { success, data: { notes: [] } } or direct array
     if (Array.isArray(response.data)) {
       return response.data;
     }
+    
+    // Handle { success: true, data: { notes: Note[] } }
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      const apiResponse = response.data as { success: boolean; data: { notes: Note[] } };
+      return apiResponse;
+    }
+    
+    // Fallback: try NotesResponse format
     const apiResponse = response.data as NotesResponse;
     return apiResponse.data || [];
   }

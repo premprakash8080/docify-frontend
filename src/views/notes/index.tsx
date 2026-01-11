@@ -576,11 +576,8 @@ const Index = () => {
             setNoteTitle(newNote.title || 'Untitled')
             setLoadingContent(false) // No need to load content for new note
             
-            // Set editor value with "Untitled" as first H1 block
-            const titleHtml = '<h1 class="note-title-block">Untitled</h1>'
-            const combinedContent = titleHtml + '<p><br></p>'
-            setEditorValue(combinedContent)
-            setNoteContent('')
+            // Set empty content for new note
+            setNoteContent('<p><br></p>')
             
             // Immediately add to filteredNotes for instant UI update (optimistic UI)
             // This ensures the notes list updates instantly without refetching
@@ -596,13 +593,43 @@ const Index = () => {
             const isMobile = window.innerWidth < 992
             selectNote(newNote.id, !isMobile)
             
+            // Focus the editor after a short delay to ensure it's rendered
+            setTimeout(() => {
+                if (quillRef.current) {
+                    const quill = quillRef.current.getEditor?.() || quillRef.current.quill
+                    if (quill) {
+                        quill.focus()
+                    }
+                }
+            }, 100)
+            
             // Do NOT reset lastFetchedKeyRef - we've already updated the list optimistically
             // This prevents unnecessary refetch of the entire notes list
         } catch (error: any) {
             console.error('Failed to create new note:', error)
-            // Show error notification if available
+            showNotification({
+                message: error.msg || error.message || 'Failed to create new note',
+                variant: 'danger',
+                title: 'Creation Error'
+            })
         }
     }
+
+    // Automatically create and open new note when route is "new"
+    const lastNewNoteRouteRef = useRef<string | null>(null)
+    useEffect(() => {
+        // Only trigger if routeType is "new" and we haven't already handled this route
+        if (context.routeType === 'new' && location.pathname !== lastNewNoteRouteRef.current) {
+            lastNewNoteRouteRef.current = location.pathname
+            // Clear any selected note first
+            setSelectedNote(null)
+            selectedNoteRef.current = null
+            setNoteTitle('')
+            setNoteContent('<p><br></p>')
+            // Automatically create and open new note
+            handleNewNote()
+        }
+    }, [context.routeType, location.pathname])
 
     const handleNoteClick = async (note: Note) => {
         // Immediately set the note for instant UI feedback
