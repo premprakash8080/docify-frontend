@@ -151,14 +151,20 @@ class NoteService {
   // Notebook Operations
   async moveNoteToNotebook(
     id: string,
-    payload: MoveNoteToNotebookPayload,
+    payload: MoveNoteToNotebookPayload | { notebook_id: string | number },
     showLoader = true
   ): Promise<{ success: boolean; msg?: string }> {
+    const notebookId = String(payload.notebook_id);
     const response = await httpService.put(
-      NOTES_ENDPOINTS.moveNoteToNotebook(id, payload.notebook_id),
+      NOTES_ENDPOINTS.moveNoteToNotebook(id, notebookId),
       {},
       { showLoader }
     );
+    
+    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+      return response.data as { success: boolean; msg?: string };
+    }
+    
     return { success: true, msg: (response.data as { msg?: string })?.msg || 'Note moved successfully' };
   }
 

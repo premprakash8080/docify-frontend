@@ -18,6 +18,7 @@ class NotebookService {
   getAllNotebooks(showLoader = true) {
     return httpService.post<{ notebooks: Notebook[]; count: number }>(
       ENDPOINTS.getAllNotebooks,
+      {},
       { showLoader }
     );
   }
