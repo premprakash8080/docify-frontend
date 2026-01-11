@@ -336,6 +336,32 @@
         tr {
             border-color: var(--#{$prefix}border-color) !important;
         }
+        
+        tbody {
+            // Alternating hour block backgrounds (4 slots per hour = 15-minute intervals)
+            // Each hour has 4 slots, so we group them in sets of 4
+            // Grey background for odd hour blocks (hours 1, 3, 5, 7, etc.)
+            // Pattern: slots 1-4, 9-12, 17-20, etc. (every 8n+1 to 8n+4)
+            tr:nth-child(8n+1),
+            tr:nth-child(8n+2),
+            tr:nth-child(8n+3),
+            tr:nth-child(8n+4) {
+                td {
+                    background-color: var(--#{$prefix}secondary-bg);
+                }
+            }
+            
+            // White background for even hour blocks (hours 2, 4, 6, 8, etc.)
+            // Pattern: slots 5-8, 13-16, 21-24, etc. (every 8n+5 to 8n+8)
+            tr:nth-child(8n+5),
+            tr:nth-child(8n+6),
+            tr:nth-child(8n+7),
+            tr:nth-child(8n+8) {
+                td {
+                    background-color: var(--#{$prefix}body-bg);
+                }
+            }
+        }
     }
 }
 

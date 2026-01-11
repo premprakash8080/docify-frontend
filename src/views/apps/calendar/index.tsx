@@ -399,9 +399,15 @@ const Index = () => {
               plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin, listPlugin]}
               bootstrapFontAwesome={false}
               handleWindowResize={true}
-              slotDuration="00:30:00"
+              slotDuration="00:15:00"
+              slotLabelInterval="01:00:00"
+              slotLabelFormat={{
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              }}
               slotMinTime="07:00:00"
-              slotMaxTime="19:00:00"
+              slotMaxTime="21:00:00"
               buttonText={{
                 today: 'Today',
                 month: 'Month',

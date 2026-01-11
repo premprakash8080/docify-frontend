@@ -33,10 +33,13 @@ type ColorOption = {
 
 const schema = yup.object().shape({
   name: yup.string().required('Tag name is required'),
-  color_id: yup.number().nullable(),
+  color_id: yup.number().nullable().notRequired(),
 });
 
-type FormValues = yup.InferType<typeof schema>;
+type FormValues = {
+  name: string;
+  color_id?: number | null;
+};
 
 function AddTagDialog({ show, onHide }: AddTagDialogProps) {
   const dispatch: AppDispatch = useDispatch();
@@ -52,7 +55,7 @@ function AddTagDialog({ show, onHide }: AddTagDialogProps) {
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(schema) as any,
     defaultValues: {
       name: '',
       color_id: null,
@@ -116,9 +119,9 @@ function AddTagDialog({ show, onHide }: AddTagDialogProps) {
     onHide();
   };
 
-  const handleColorChange = (option: ColorOption | null) => {
-    setSelectedColor(option);
-    setValue('color_id', option?.value || null);
+  const handleColorChange = (val: ColorOption | null) => {
+    setSelectedColor(val);
+    setValue('color_id', val?.value || null);
   };
 
   const customOption = ({ data, innerRef, innerProps }: any) => (
@@ -130,6 +133,7 @@ function AddTagDialog({ show, onHide }: AddTagDialogProps) {
           height: '16px',
           backgroundColor: data.hex_code,
           padding: 0,
+          flexShrink: 0,
         }}
       />
       <span>{data.label}</span>
@@ -145,11 +149,18 @@ function AddTagDialog({ show, onHide }: AddTagDialogProps) {
           height: '16px',
           backgroundColor: data.hex_code,
           padding: 0,
+          flexShrink: 0,
         }}
       />
       <span>{data.label}</span>
     </div>
   );
+
+  const customInput = (props: any) => {
+    // Hide the dummy input when not searchable
+    return <input {...props} style={{ display: 'none' }} />;
+  };
+
 
   return (
     <Modal show={show} onHide={handleClose} centered>
@@ -194,12 +205,14 @@ function AddTagDialog({ show, onHide }: AddTagDialogProps) {
               placeholder="Select a color"
               options={colorOptions}
               value={selectedColor}
-              onChange={handleColorChange}
+              onChange={(val) => handleColorChange(val as ColorOption | null)}
               isClearable
               isDisabled={loading}
+              isSearchable={false}
               components={{
                 Option: customOption,
                 SingleValue: customSingleValue,
+                Input: customInput,
               }}
             />
             <input type="hidden" {...register('color_id')} />
