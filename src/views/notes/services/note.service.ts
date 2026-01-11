@@ -10,7 +10,6 @@ import type {
   NotesResponse,
   NoteResponse,
   NoteNamesResponse,
-  NoteContentResponse,
   TagsResponse,
   TagResponse,
   FilesResponse,
@@ -46,12 +45,12 @@ class NoteService {
     const url = queryString ? `${NOTES_ENDPOINTS.getAllNotes}?${queryString}` : NOTES_ENDPOINTS.getAllNotes;
 
     const response = await httpService.get<Note[] | { data: { notes: Note[] } }>(url, { showLoader });
-    
+
     // Handle different response formats
     if (Array.isArray(response.data)) {
       return response.data;
     }
-    
+
     // Handle { success: true, data: { notes: [...] } }
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
       const data = (response.data as { data: { notes: Note[] } }).data;
@@ -59,7 +58,7 @@ class NoteService {
         return { data: { notes: data.notes } };
       }
     }
-    
+
     // Handle { success: true, data: [...] }
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
       const data = (response.data as NotesResponse).data;
@@ -67,7 +66,7 @@ class NoteService {
         return data;
       }
     }
-    
+
     return [];
   }
 
@@ -82,12 +81,12 @@ class NoteService {
   async getNoteById(
     id: string,
     showLoader = true
-  ): Promise<NoteResponse | Note> {
-    const response = await httpService.get<Note>(
+  ): Promise<{ success: boolean; data: { note: Note } }> {
+    const response = await httpService.get<{ success: boolean; data: { note: Note } }>(
       `${NOTES_ENDPOINTS.getNoteById}?id=${id}`,
       { showLoader }
     );
-    return response.data;
+    return response.data as { success: boolean; data: { note: Note } };
   }
 
   async createNote(
@@ -95,7 +94,7 @@ class NoteService {
     showLoader = true
   ): Promise<NoteResponse | Note | { success: boolean; msg: string; data: { note: Note } }> {
     const response = await httpService.post<
-      Note | 
+      Note |
       { success: boolean; msg: string; data: { note: Note } }
     >(
       NOTES_ENDPOINTS.createNote,
@@ -107,12 +106,12 @@ class NoteService {
       },
       { showLoader }
     );
-    
+
     // Handle new response format: { success: true, msg: "...", data: { note: {...} } }
     if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
       return response.data as { success: boolean; msg: string; data: { note: Note } };
     }
-    
+
     // Handle legacy NoteResponse format
     if (response.data && typeof response.data === 'object' && 'data' in response.data) {
       const responseData = response.data as any;
@@ -123,7 +122,7 @@ class NoteService {
         return responseData as NoteResponse;
       }
     }
-    
+
     return response.data as Note;
   }
 
@@ -145,11 +144,11 @@ class NoteService {
 
   async deleteNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string }> {
     const response = await httpService.delete(NOTES_ENDPOINTS.deleteNote, { id }, { showLoader });
-    
+
     if (response.data && typeof response.data === 'object' && 'success' in response.data) {
       return response.data as { success: boolean; msg?: string };
     }
-    
+
     return { success: true, msg: (response.data as { msg?: string })?.msg || 'Note deleted successfully' };
   }
 
@@ -165,11 +164,11 @@ class NoteService {
       {},
       { showLoader }
     );
-    
+
     if (response.data && typeof response.data === 'object' && 'success' in response.data) {
       return response.data as { success: boolean; msg?: string };
     }
-    
+
     return { success: true, msg: (response.data as { msg?: string })?.msg || 'Note moved successfully' };
   }
 
@@ -269,44 +268,6 @@ class NoteService {
     return { success: true, msg: (response.data as { msg?: string })?.msg || 'Note content saved successfully' };
   }
 
-  async getNoteContent(
-    id: string,
-    showLoader = true
-  ): Promise<NoteContentResponse | string | { success: boolean; data: { note: Note; tags: any[]; stack_name: string | null } }> {
-    const queryParams = new URLSearchParams();
-    queryParams.append('id', id);
-    const url = `${NOTES_ENDPOINTS.getNoteContent}?${queryParams.toString()}`;
-    const response = await httpService.get<
-      string | 
-      { content: string; note_id: string } | 
-      { success: boolean; data: { note: Note; tags: any[]; stack_name: string | null } }
-    >(url, { showLoader });
-    
-    // Handle new response format: { success: true, data: { note: {...}, tags: [], stack_name: null } }
-    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
-      return response.data as { success: boolean; data: { note: Note; tags: any[]; stack_name: string | null } };
-    }
-    
-    // Handle legacy string format
-    if (typeof response.data === 'string') {
-      return response.data;
-    }
-    
-    // Handle { content: string } format
-    if (response.data && typeof response.data === 'object' && 'content' in response.data) {
-      return (response.data as { content: string }).content;
-    }
-    
-    // Handle nested data structure
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      const data = (response.data as NoteContentResponse).data;
-      if (typeof data === 'string') {
-        return data;
-      }
-    }
-    
-    return '';
-  }
 
   // Image Operations
   async uploadNoteImage(

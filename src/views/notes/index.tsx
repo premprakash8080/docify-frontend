@@ -268,53 +268,54 @@ const Index = () => {
                 lastLoadedNoteIdRef.current = noteId
                 try {
                     setLoadingContent(true)
-                    // Use getNoteContent API for consistent behavior
-                    const response = await noteService.getNoteContent(noteId, true)
+                    // Use getNoteById API - it returns all note data including content
+                    const response = await noteService.getNoteById(noteId, true)
                     
-                    // Handle different response formats
-                    let contentText = ''
+                    // Handle response format: { success: true, data: { note: {...} } }
                     let noteData: Note | null = null
+                    let contentText = ''
                     
-                    // Check if response is the new full note structure
-                    if (typeof response === 'object' && response !== null && 'success' in response && 'data' in response) {
-                        const data = (response as any).data
+                    if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
+                        const data = (response as { success: boolean; data: { note: Note } }).data
                         if (data && typeof data === 'object' && 'note' in data) {
-                            // Full note structure: { success: true, data: { note: {...}, tags: [], stack_name: null } }
-                            noteData = data.note as Note
-                            // Handle content as string or NoteContent object
-                            if (typeof noteData.content === 'string') {
-                                contentText = noteData.content
-                            } else if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                            noteData = data.note
+                            // Extract content from note.content.content (content is an object with a content property)
+                            if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
                                 contentText = (noteData.content as NoteContent).content || ''
+                            } else if (typeof noteData.content === 'string') {
+                                contentText = noteData.content
                             } else {
                                 contentText = ''
                             }
                         }
-                    } else if (typeof response === 'string') {
-                        // Direct content string - need to get note metadata separately
-                        contentText = response
-                        try {
-                            const noteResponse = await noteService.getNoteById(noteId, false)
-                            noteData = (noteResponse as any).note || noteResponse as Note
-                        } catch (err) {
-                            console.warn('Failed to fetch note metadata:', err)
+                    } else if (response && typeof response === 'object' && 'data' in response) {
+                        // Legacy NoteResponse format
+                        const responseData = response as NoteResponse
+                        noteData = responseData.data
+                        if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                            contentText = (noteData.content as NoteContent).content || ''
+                        } else if (typeof noteData.content === 'string') {
+                            contentText = noteData.content
+                        } else {
+                            contentText = ''
                         }
-                    } else if (typeof response === 'object' && response !== null && 'content' in response) {
-                        contentText = (response as any).content
-                        try {
-                            const noteResponse = await noteService.getNoteById(noteId, false)
-                            noteData = (noteResponse as any).note || noteResponse as Note
-                        } catch (err) {
-                            console.warn('Failed to fetch note metadata:', err)
+                    } else if (response && typeof response === 'object' && 'id' in response) {
+                        // Direct Note object
+                        noteData = response as Note
+                        if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                            contentText = (noteData.content as NoteContent).content || ''
+                        } else if (typeof noteData.content === 'string') {
+                            contentText = noteData.content
+                        } else {
+                            contentText = ''
                         }
                     }
                     
                     if (noteData) {
-                    setNoteContent(contentText)
-                    setNoteTitle(noteData.title || '')
-                        const noteToSet = noteData
-                        setSelectedNote(noteToSet)
-                        selectedNoteRef.current = noteToSet
+                        setNoteContent(contentText)
+                        setNoteTitle(noteData.title || '')
+                        setSelectedNote(noteData)
+                        selectedNoteRef.current = noteData
                         
                         // Combine title and content for editor - title as first H1 block
                         const titleHtml = noteData.title 
@@ -324,16 +325,18 @@ const Index = () => {
                         setEditorValue(combinedContent)
                     } else {
                         // Fallback if we couldn't get note data
-                        setNoteContent(contentText)
+                        setNoteContent('')
                         setNoteTitle('')
+                        setSelectedNote(null)
+                        selectedNoteRef.current = null
                         const titleHtml = '<h1 class="note-title-block"><br></h1>'
-                        setEditorValue(titleHtml + (contentText || '<p><br></p>'))
+                        setEditorValue(titleHtml + '<p><br></p>')
                     }
                 } catch (error: any) {
                     console.error('Failed to load note from URL:', error)
                     setNoteContent('')
                     setSelectedNote(null)
-                selectedNoteRef.current = null
+                    selectedNoteRef.current = null
                     setNoteTitle('')
                     setEditorValue('<h1 class="note-title-block"><br></h1><p><br></p>')
                     lastLoadedNoteIdRef.current = null // Reset on error to allow retry
@@ -650,24 +653,22 @@ const Index = () => {
         setLoadingContent(true)
         
         try {
-            // Fetch full note content immediately using getNoteContent API
-            const response = await noteService.getNoteContent(note.id, true)
+            // Fetch full note data using getNoteById API - it returns all data including content
+            const response = await noteService.getNoteById(note.id, true)
             
-            // Handle different response formats
-            let contentText = ''
+            // Handle response format: { success: true, data: { note: {...} } }
             let noteData = note
+            let contentText = ''
             
-            // Check if response is the new full note structure: { success: true, data: { note: {...}, tags: [], stack_name: null } }
-            if (typeof response === 'object' && response !== null && 'success' in response && 'data' in response) {
-                const data = (response as any).data
+            if (response && typeof response === 'object' && 'success' in response && 'data' in response) {
+                const data = (response as { success: boolean; data: { note: Note } }).data
                 if (data && typeof data === 'object' && 'note' in data) {
-                    // Full note structure
-                    noteData = data.note as Note
-                    // Handle content as string or NoteContent object
-                    if (typeof noteData.content === 'string') {
-                        contentText = noteData.content
-                    } else if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                    noteData = data.note
+                    // Extract content from note.content.content (content is an object with a content property)
+                    if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
                         contentText = (noteData.content as NoteContent).content || ''
+                    } else if (typeof noteData.content === 'string') {
+                        contentText = noteData.content
                     } else {
                         contentText = ''
                     }
@@ -675,12 +676,33 @@ const Index = () => {
                     selectedNoteRef.current = noteData
                     setNoteTitle(noteData.title || '')
                 }
-            } else if (typeof response === 'string') {
-                // Direct content string
-                contentText = response
-            } else if (typeof response === 'object' && response !== null && 'content' in response) {
-                // { content: string } format
-                contentText = (response as any).content
+            } else if (response && typeof response === 'object' && 'data' in response) {
+                // Legacy NoteResponse format
+                const responseData = response as NoteResponse
+                noteData = responseData.data
+                if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                    contentText = (noteData.content as NoteContent).content || ''
+                } else if (typeof noteData.content === 'string') {
+                    contentText = noteData.content
+                } else {
+                    contentText = ''
+                }
+                setSelectedNote(noteData)
+                selectedNoteRef.current = noteData
+                setNoteTitle(noteData.title || '')
+            } else if (response && typeof response === 'object' && 'id' in response) {
+                // Direct Note object
+                noteData = response as Note
+                if (noteData.content && typeof noteData.content === 'object' && 'content' in noteData.content) {
+                    contentText = (noteData.content as NoteContent).content || ''
+                } else if (typeof noteData.content === 'string') {
+                    contentText = noteData.content
+                } else {
+                    contentText = ''
+                }
+                setSelectedNote(noteData)
+                selectedNoteRef.current = noteData
+                setNoteTitle(noteData.title || '')
             }
             
             // Set editor value with title as first H1 block - immediately render

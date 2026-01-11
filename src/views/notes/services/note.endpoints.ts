@@ -32,7 +32,6 @@ export const NOTES_ENDPOINTS = {
 
   // Content operations
   saveNoteContent: (id: string) => `/notes/${id}/content`,
-  getNoteContent: '/notes/getNoteContent',
 
   // Image operations
   uploadNoteImage: '/notes/images',
