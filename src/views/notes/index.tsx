@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
-import { useLocation, useParams } from 'react-router'
+import { useLocation, useParams, useNavigate } from 'react-router'
 import {
     Card,
     Container,
     Offcanvas,
-    Spinner
+    Spinner,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+    ModalTitle,
+    Button,
+    Alert
 } from 'react-bootstrap'
 import SimpleBar from "simplebar-react";
 import PageBreadcrumb from '@/components/PageBreadcrumb'
@@ -50,6 +57,7 @@ const modules = {
 const Index = () => {
     const location = useLocation()
     const params = useParams()
+    const navigate = useNavigate()
     const { onNoteSelected, selectNote } = useNoteNavigation()
     const { showNotification } = useNotificationContext()
     
@@ -61,6 +69,9 @@ const Index = () => {
     const [noteTitle, setNoteTitle] = useState<string>('')
     const [editorValue, setEditorValue] = useState<string>('')
     const [loadingContent, setLoadingContent] = useState(false)
+    const [showDeleteModal, setShowDeleteModal] = useState(false)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteError, setDeleteError] = useState<string | null>(null)
     const quillRef = useRef<any>(null)
     const isUpdatingEditorRef = useRef(false)
     const titleSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -796,8 +807,9 @@ const Index = () => {
                             console.log('Print note')
                         }}
                         onDelete={() => {
-                            // TODO: Implement delete
-                            console.log('Delete note')
+                            if (!selectedNote?.id) return
+                            setShowDeleteModal(true)
+                            setDeleteError(null)
                         }}
                     />
 
@@ -905,6 +917,114 @@ const Index = () => {
                     </SimpleBar>
                 </Card>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={() => {
+                setShowDeleteModal(false)
+                setDeleteError(null)
+            }} centered>
+                <ModalHeader>
+                    <ModalTitle>Delete Note</ModalTitle>
+                    <button type="button" className="btn-close" onClick={() => {
+                        setShowDeleteModal(false)
+                        setDeleteError(null)
+                    }}></button>
+                </ModalHeader>
+                <ModalBody>
+                    <p>
+                        Are you sure you want to delete &quot;{selectedNote?.title || 'Untitled'}&quot;? This action cannot be undone.
+                    </p>
+                    {deleteError && (
+                        <Alert variant="danger" className="mt-3 mb-0">
+                            {deleteError}
+                        </Alert>
+                    )}
+                </ModalBody>
+                <ModalFooter>
+                    <Button variant="light" onClick={() => {
+                        setShowDeleteModal(false)
+                        setDeleteError(null)
+                    }} disabled={deleting}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={async () => {
+                        if (!selectedNote?.id) return
+                        
+                        setDeleting(true)
+                        setDeleteError(null)
+                        
+                        try {
+                            const result = await noteService.deleteNote(selectedNote.id, true)
+                            
+                            if (result.success) {
+                                const deletedNoteId = selectedNote.id
+                                const deletedNoteNotebookId = selectedNote.notebook_id
+                                
+                                // Remove note from filtered notes list
+                                setFilteredNotes(prev => prev.filter(note => note.id !== deletedNoteId))
+                                
+                                // Clear selected note
+                                setSelectedNote(null)
+                                selectedNoteRef.current = null
+                                setNoteContent('')
+                                setNoteTitle('')
+                                setEditorValue('')
+                                
+                                // Navigate away based on context
+                                const currentPath = location.pathname
+                                if (currentPath.includes(`/note/${deletedNoteId}`)) {
+                                    if (currentPath.includes('/notebook/')) {
+                                        const notebookId = currentPath.split('/notebook/')[1]?.split('/')[0] || deletedNoteNotebookId
+                                        if (notebookId) {
+                                            navigate(`/notes/notebook/${notebookId}/notes`)
+                                        } else {
+                                            navigate('/notes')
+                                        }
+                                    } else if (currentPath.includes('/stack/')) {
+                                        const stackId = currentPath.split('/stack/')[1]?.split('/')[0]
+                                        if (stackId) {
+                                            navigate(`/notes/stack/${stackId}/notebooks`)
+                                        } else {
+                                            navigate('/notes')
+                                        }
+                                    } else {
+                                        navigate('/notes')
+                                    }
+                                }
+                                
+                                // Refresh notes list by resetting the filter key
+                                lastFetchedKeyRef.current = null
+                                
+                                // Close modal
+                                setShowDeleteModal(false)
+                                
+                                // Show success notification
+                                showNotification({
+                                    message: result.msg || 'Note deleted successfully',
+                                    variant: 'success',
+                                    title: 'Deleted'
+                                })
+                            } else {
+                                setDeleteError(result.msg || 'Failed to delete note')
+                            }
+                        } catch (error: any) {
+                            console.error('Failed to delete note:', error)
+                            setDeleteError(error.msg || error.message || 'Failed to delete note')
+                        } finally {
+                            setDeleting(false)
+                        }
+                    }} disabled={deleting}>
+                        {deleting ? (
+                            <>
+                                <Spinner animation="border" size="sm" className="me-2" />
+                                Deleting...
+                            </>
+                        ) : (
+                            'Delete'
+                        )}
+                    </Button>
+                </ModalFooter>
+            </Modal>
         </Container>
     )
 }

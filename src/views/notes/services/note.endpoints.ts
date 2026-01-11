@@ -9,7 +9,7 @@ export const NOTES_ENDPOINTS = {
   getNoteById: '/notes/getNoteById',
   createNote: '/notes',
   updateNote: (id: string) => `/notes/${id}`,
-  deleteNote: (id: string) => `/notes/${id}`,
+  deleteNote: '/notes/deleteNote',
 
   // Notebook operations
   moveNoteToNotebook: (id: string, notebookId: string) => `/notes/${id}/notebook/${notebookId}`,

@@ -144,7 +144,12 @@ class NoteService {
   }
 
   async deleteNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string }> {
-    const response = await httpService.delete(NOTES_ENDPOINTS.deleteNote(id), { showLoader });
+    const response = await httpService.delete(NOTES_ENDPOINTS.deleteNote, { id }, { showLoader });
+    
+    if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+      return response.data as { success: boolean; msg?: string };
+    }
+    
     return { success: true, msg: (response.data as { msg?: string })?.msg || 'Note deleted successfully' };
   }
 

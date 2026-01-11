@@ -15,5 +15,6 @@ export const ENDPOINTS = {
   getStackNotebooks: (stackId: string) => `/stacks/${stackId}/notebooks`,
   getNotebookNotes: (notebookId: string) => `/notebooks/${notebookId}/notes`,
   getNotebookNotesById: '/notebooks/getNotebookNotesById',
+  deleteNotes: '/notes/deleteNotes',
 } as const;
 

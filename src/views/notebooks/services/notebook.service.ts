@@ -5,7 +5,6 @@ import type {
   UpdateStackPayload,
   CreateNotebookPayload,
   UpdateNotebookPayload,
-  MoveNotebookPayload,
   Stack,
   Notebook,
 } from '../types';
@@ -57,7 +56,7 @@ class NotebookService {
   updateStack(stackId: string, data: UpdateStackPayload, showLoader = true) {
     return httpService.put<{ stack: Stack }>(
       ENDPOINTS.updateStack(stackId),
-      { id: stackId, ...data },
+      { ...data, id: stackId },
       { showLoader }
     );
   }
@@ -73,7 +72,7 @@ class NotebookService {
   updateNotebook(notebookId: string, data: UpdateNotebookPayload, showLoader = true) {
     return httpService.put<{ notebook: Notebook }>(
       ENDPOINTS.updateNotebook(notebookId),
-      { id: notebookId, ...data },
+      { ...data, id: notebookId },
       { showLoader }
     );
   }
@@ -91,6 +90,14 @@ class NotebookService {
       },
       { showLoader }
     );
+  }
+  async deleteNotes(notes: string[], showLoader = true) {
+    const response = await httpService.delete<{ success: boolean }>(
+      ENDPOINTS.deleteNotes,
+      { notes },
+      { showLoader }
+    );
+    return response.data as { success: boolean };
   }
 }
 

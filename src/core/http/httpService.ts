@@ -73,19 +73,26 @@ class HttpService {
   /**
    * DELETE request
    * @param url - API endpoint (relative to baseURL)
+   * @param data - Optional request body data
    * @param config - Optional request configuration
    * @returns Promise with typed response data
    * 
    * @example
    * ```ts
    * await httpService.delete('/users/1');
+   * await httpService.delete('/notes/deleteNote', { id: 'note-id' });
    * ```
    */
-  async delete<T = unknown>(
+  async delete<T = unknown, D = unknown>(
     url: string,
+    data?: D,
     config?: HttpRequestConfig
   ): Promise<HttpResponse<ApiResponse<T> | T>> {
-    return httpClient.delete<ApiResponse<T> | T>(url, config);
+    const deleteConfig: HttpRequestConfig = {
+      ...config,
+      ...(data && { data }),
+    };
+    return httpClient.delete<ApiResponse<T> | T>(url, deleteConfig);
   }
 
   /**

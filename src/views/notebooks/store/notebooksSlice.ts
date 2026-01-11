@@ -231,6 +231,21 @@ const notebooksSlice = createSlice({
     closeDeleteNoteDialog: (state) => {
       state.deleteNoteDialog = { open: false, note: null };
     },
+    removeNoteFromNotebooks: (state, action: PayloadAction<string>) => {
+      const noteId = action.payload;
+      state.stacks = state.stacks.map((stack) => ({
+        ...stack,
+        notebooks:
+          stack.notebooks?.map((nb) => ({
+            ...nb,
+            notes: nb.notes?.filter((note) => note.id !== noteId) || [],
+          })) || [],
+      }));
+      state.standaloneNotebooks = state.standaloneNotebooks.map((nb) => ({
+        ...nb,
+        notes: nb.notes?.filter((note) => note.id !== noteId) || [],
+      }));
+    },
     openMoveNoteDialog: (state, action: PayloadAction<Note>) => {
       state.moveNoteDialog = { open: true, note: action.payload };
     },
@@ -392,6 +407,7 @@ export const {
   closeRenameNoteDialog,
   openDeleteNoteDialog,
   closeDeleteNoteDialog,
+  removeNoteFromNotebooks,
   openMoveNoteDialog,
   closeMoveNoteDialog,
   setSearchText,

@@ -152,7 +152,7 @@ class NoteService {
    * @param showLoader - Whether to show global loader (default: true)
    */
   async deleteNote(noteId: string, showLoader = true): Promise<{ success: boolean; msg: string }> {
-    const response = await httpService.delete<{ success: boolean; msg: string }>(ENDPOINTS.deleteNote(noteId), { showLoader });
+    const response = await httpService.delete<{ success: boolean; msg: string }>(ENDPOINTS.deleteNote, { id: noteId }, { showLoader });
     
     // Handle both response formats
     if (response.data && typeof response.data === 'object' && 'success' in response.data && 'msg' in response.data) {
