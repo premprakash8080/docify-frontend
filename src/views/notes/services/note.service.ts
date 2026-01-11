@@ -195,14 +195,22 @@ class NoteService {
   }
 
   // State Operations
-  async pinNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string }> {
-    const response = await httpService.put(NOTES_ENDPOINTS.pinNote(id), {}, { showLoader });
-    return { success: true, msg: (response.data as { msg?: string })?.msg || 'Note pinned successfully' };
+  async pinNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string; data?: { note: Note } }> {
+    const response = await httpService.put<{ success: boolean; msg?: string; data: { note: Note } }>(
+      NOTES_ENDPOINTS.pinNote(id),
+      {},
+      { showLoader }
+    );
+    return response.data as { success: boolean; msg?: string; data?: { note: Note } };
   }
 
-  async unpinNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string }> {
-    const response = await httpService.put(NOTES_ENDPOINTS.unpinNote(id), {}, { showLoader });
-    return { success: true, msg: (response.data as { msg?: string })?.msg || 'Note unpinned successfully' };
+  async unpinNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string; data?: { note: Note } }> {
+    const response = await httpService.put<{ success: boolean; msg?: string; data: { note: Note } }>(
+      NOTES_ENDPOINTS.unpinNote(id),
+      {},
+      { showLoader }
+    );
+    return response.data as { success: boolean; msg?: string; data?: { note: Note } };
   }
 
   async archiveNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string }> {

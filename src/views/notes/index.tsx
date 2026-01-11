@@ -781,19 +781,37 @@ const Index = () => {
                         onPin={async () => {
                             if (!selectedNote?.id) return
                             try {
-                                if (selectedNote.pinned) {
-                                    await noteService.unpinNote(selectedNote.id)
-                                } else {
-                                    await noteService.pinNote(selectedNote.id)
+                                const result = selectedNote.pinned
+                                    ? await noteService.unpinNote(selectedNote.id)
+                                    : await noteService.pinNote(selectedNote.id)
+                                
+                                // Update note data from response
+                                if (result.success && result.data?.note) {
+                                    const updatedNote = result.data.note
+                                    setSelectedNote(updatedNote)
+                                    selectedNoteRef.current = updatedNote
+                                    
+                                    // Update the note in the filteredNotes list
+                                    setFilteredNotes(prev => 
+                                        prev.map(note => 
+                                            note.id === updatedNote.id ? updatedNote : note
+                                        )
+                                    )
+                                    
+                                    // Show success notification
+                                    showNotification({
+                                        message: result.msg || (selectedNote.pinned ? 'Note unpinned successfully' : 'Note pinned successfully'),
+                                        variant: 'success',
+                                        title: selectedNote.pinned ? 'Unpinned' : 'Pinned'
+                                    })
                                 }
-                                // Refresh note data
-                                const response = await noteService.getNoteById(selectedNote.id, true)
-                                const updatedNote = (response as any).note || response as Note
-                                const updated = updatedNote as Note
-                                setSelectedNote(updated)
-                                selectedNoteRef.current = updated
                             } catch (error: any) {
                                 console.error('Failed to toggle pin:', error)
+                                showNotification({
+                                    message: error.msg || error.message || 'Failed to toggle pin',
+                                    variant: 'danger',
+                                    title: 'Error'
+                                })
                             }
                         }}
                         onArchive={() => {
