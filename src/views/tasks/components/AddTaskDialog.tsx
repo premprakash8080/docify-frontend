@@ -20,7 +20,7 @@ import {
 import { createTask, updateTask, fetchTasks, fetchTaskById } from '../store/tasksSlice';
 import httpService from '@/core/http';
 import type { AppDispatch } from '@/store/types';
-import type { CreateTaskPayload, UpdateTaskPayload } from '../types';
+import type { CreateTaskPayload, UpdateTaskPayload, TaskResponse } from '../types';
 
 interface NoteOption {
   value: string;
@@ -115,6 +115,7 @@ function AddTaskDialog({ show, onHide, mode = 'add', taskId = null }: AddTaskDia
     reset,
     setValue,
     watch,
+    getValues,
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
@@ -165,43 +166,81 @@ function AddTaskDialog({ show, onHide, mode = 'add', taskId = null }: AddTaskDia
     const fetchTaskData = async () => {
       if (show && taskId && (isEditMode || isViewMode)) {
         setLoadingTask(true);
+        setError(null);
         try {
           const result = await dispatch(fetchTaskById(taskId));
           if (result.type.endsWith('/fulfilled')) {
-            const payload = result.payload as any;
-            const taskData = payload?.data?.task || payload?.task || payload;
+            const payload = result.payload as TaskResponse;
+            // Extract task from response: { success: true, data: { task: Task } }
+            const taskData = payload?.data?.task;
             
-            // Extract date from due_date if it's an ISO string
-            let dueDate = taskData.due_date || null;
-            if (dueDate && dueDate.includes('T')) {
-              dueDate = dueDate.split('T')[0];
+            if (!taskData) {
+              setError('Task data not found');
+              setLoadingTask(false);
+              return;
             }
             
-            // Extract time from start_time, end_time, reminder if they're ISO strings
-            let startTime = taskData.start_time || null;
-            if (startTime && startTime.includes('T')) {
-              const timePart = startTime.split('T')[1];
-              startTime = timePart ? timePart.split(':').slice(0, 2).join(':') : null;
-            }
+            // Helper function to extract date from ISO string or date string
+            const extractDate = (dateValue: string | null | undefined): string | null => {
+              if (!dateValue) return null;
+              // If it's already in YYYY-MM-DD format, return as is
+              if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+                return dateValue;
+              }
+              // If it's an ISO string, extract date part
+              if (typeof dateValue === 'string' && dateValue.includes('T')) {
+                return dateValue.split('T')[0];
+              }
+              // Try to parse and format
+              try {
+                const date = new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                  return date.toISOString().split('T')[0];
+                }
+              } catch (e) {
+                // Ignore parsing errors
+              }
+              return null;
+            };
             
-            let endTime = taskData.end_time || null;
-            if (endTime && endTime.includes('T')) {
-              const timePart = endTime.split('T')[1];
-              endTime = timePart ? timePart.split(':').slice(0, 2).join(':') : null;
-            }
+            // Helper function to extract time from ISO string or time string
+            const extractTime = (timeValue: string | null | undefined): string | null => {
+              if (!timeValue) return null;
+              // If it's already in HH:MM format, return as is
+              if (typeof timeValue === 'string' && /^\d{2}:\d{2}$/.test(timeValue)) {
+                return timeValue;
+              }
+              // If it's an ISO string, extract time part
+              if (typeof timeValue === 'string' && timeValue.includes('T')) {
+                const timePart = timeValue.split('T')[1];
+                if (timePart) {
+                  // Extract HH:MM from HH:MM:SS or HH:MM:SS.mmm
+                  const timeMatch = timePart.match(/^(\d{2}:\d{2})/);
+                  return timeMatch ? timeMatch[1] : null;
+                }
+              }
+              // Try to parse as time string
+              if (typeof timeValue === 'string' && timeValue.includes(':')) {
+                const timeMatch = timeValue.match(/^(\d{2}:\d{2})/);
+                return timeMatch ? timeMatch[1] : null;
+              }
+              return null;
+            };
             
-            let reminder = taskData.reminder || null;
-            if (reminder && reminder.includes('T')) {
-              const timePart = reminder.split('T')[1];
-              reminder = timePart ? timePart.split(':').slice(0, 2).join(':') : null;
-            }
+            // Extract dates and times
+            const dueDate = extractDate(taskData.due_date || taskData.start_date);
+            const startTime = extractTime(taskData.start_time);
+            const endTime = extractTime(taskData.end_time);
+            const reminder = extractTime(taskData.reminder);
             
             // Find the note option if note_id exists
+            // Wait for notes to be loaded if they're not available yet
             let noteOption: NoteOption | null = null;
             if (taskData.note_id && notes.length > 0) {
               noteOption = notes.find((n) => n.value === taskData.note_id) || null;
             }
             
+            // Reset form with task data
             reset({
               note_id: taskData.note_id || null,
               label: taskData.label || '',
@@ -211,22 +250,39 @@ function AddTaskDialog({ show, onHide, mode = 'add', taskId = null }: AddTaskDia
               end_time: endTime,
               reminder: reminder,
               assigned_to: taskData.assigned_to || null,
-              priority: taskData.priority || null,
+              priority: (taskData.priority as 'low' | 'medium' | 'high' | null) || null,
               flagged: taskData.flagged || false,
               completed: taskData.completed || false,
             });
             
-            setSelectedNote(noteOption);
+            // Set selected note if found
+            if (noteOption) {
+              setSelectedNote(noteOption);
+            }
           } else {
-            setError(result.payload as string || 'Failed to load task');
+            setError((result.payload as string) || 'Failed to load task');
           }
         } catch (err: any) {
+          console.error('Error fetching task:', err);
           setError(err.message || 'Failed to load task');
         } finally {
           setLoadingTask(false);
         }
       } else if (show && mode === 'add') {
-        reset();
+        // Reset form for add mode
+        reset({
+          note_id: null,
+          label: '',
+          description: '',
+          due_date: null,
+          start_time: null,
+          end_time: null,
+          reminder: null,
+          assigned_to: null,
+          priority: null,
+          flagged: false,
+          completed: false,
+        });
         setSelectedNote(null);
         setError(null);
       }
@@ -234,6 +290,20 @@ function AddTaskDialog({ show, onHide, mode = 'add', taskId = null }: AddTaskDia
 
     fetchTaskData();
   }, [show, taskId, isEditMode, isViewMode, dispatch, reset, notes]);
+  
+  // Update note selection when notes are loaded and we have a task with note_id
+  useEffect(() => {
+    if (show && taskId && (isEditMode || isViewMode) && notes.length > 0) {
+      // Get the current note_id from the form
+      const currentNoteId = getValues('note_id');
+      if (currentNoteId) {
+        const noteOption = notes.find((n) => n.value === currentNoteId);
+        if (noteOption && (!selectedNote || selectedNote.value !== currentNoteId)) {
+          setSelectedNote(noteOption);
+        }
+      }
+    }
+  }, [notes, show, taskId, isEditMode, isViewMode, getValues, selectedNote]);
 
   // Reset end_time when start_time changes
   useEffect(() => {
