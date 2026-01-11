@@ -134,17 +134,6 @@ const TagsTable = () => {
         });
       },
     }),
-    columnHelper.accessor('updated_at', {
-      header: 'Updated',
-      cell: ({ row }) => {
-        const date = new Date(row.original.updated_at);
-        return date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-      },
-    }),
     {
       header: 'Actions',
       cell: ({ row }: { row: TableRow<Tag> }) => (
