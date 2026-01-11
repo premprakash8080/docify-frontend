@@ -9,5 +9,6 @@ export const AUTH_ENDPOINTS = {
   refreshToken: '/users/refresh-token',
   forgotPassword: '/users/forgot-password',
   resetPassword: '/users/reset-password',
+  getProfile: '/users/profile',
 } as const;
 

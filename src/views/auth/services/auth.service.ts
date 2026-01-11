@@ -9,6 +9,7 @@ import type {
   ForgotPasswordPayload,
   ResetPasswordPayload,
   LogoutResponse,
+  User,
 } from './auth.types';
 
 /**
@@ -70,6 +71,10 @@ class AuthService {
           localStorage.setItem('token_expires', authResponse.data.expires);
         }
       }
+      // Store user data in localStorage
+      if (authResponse.data?.user) {
+        localStorage.setItem('user_data', JSON.stringify(authResponse.data.user));
+      }
       return authResponse;
     }
     const authData = response.data as AuthResponse['data'];
@@ -78,6 +83,10 @@ class AuthService {
       if (authData.expires) {
         localStorage.setItem('token_expires', authData.expires);
       }
+    }
+    // Store user data in localStorage
+    if (authData?.user) {
+      localStorage.setItem('user_data', JSON.stringify(authData.user));
     }
     return {
       success: true,
@@ -94,10 +103,11 @@ class AuthService {
   async logout(showLoader = true): Promise<LogoutResponse> {
     const response = await httpService.post<unknown>(AUTH_ENDPOINTS.logout, null, { showLoader });
 
-    // Clear tokens from localStorage
+    // Clear tokens and user data from localStorage
     localStorage.removeItem('jwt_access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('token_expires');
+    localStorage.removeItem('user_data');
 
     // Handle response format
     if (response.data && typeof response.data === 'object' && 'success' in response.data) {
@@ -195,6 +205,26 @@ class AuthService {
     return {
       success: true,
       msg: 'Password reset successfully',
+    };
+  }
+
+  /**
+   * Get current user profile
+   * @param showLoader - Whether to show global loader (default: false)
+   * @returns User profile data
+   */
+  async getProfile(showLoader = false): Promise<{ success: boolean; data: { user: User } }> {
+    const response = await httpService.get<{ user: User }>(AUTH_ENDPOINTS.getProfile, {
+      showLoader,
+    });
+
+    // Handle response format
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      return response.data as { success: boolean; data: { user: User } };
+    }
+    return {
+      success: true,
+      data: { user: response.data as User },
     };
   }
 }

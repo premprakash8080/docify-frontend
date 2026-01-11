@@ -1,4 +1,5 @@
 import httpService from '@/core/http';
+import type { ApiResponse } from '@/core/http/httpTypes';
 import { ENDPOINTS } from './note.endpoints';
 import type {
   Note,
@@ -151,6 +152,56 @@ class NoteService {
       success: true,
       msg: 'Note deleted successfully',
     };
+  }
+
+  /**
+   * Get scratch pad content
+   * @param showLoader - Whether to show global loader (default: false)
+   * @returns Scratch pad response with content and updated_at
+   */
+  async getScratchpad(showLoader = false): Promise<ApiResponse<{ content: string; updated_at: string }>> {
+    const response = await httpService.get<{ content: string; updated_at: string }>(
+      ENDPOINTS.getScratchpad,
+      { showLoader }
+    );
+    
+    // API always returns { success: true, data: { content, updated_at } }
+    return response.data as ApiResponse<{ content: string; updated_at: string }>;
+  }
+
+  /**
+   * Update scratch pad content
+   * @param content - Scratch pad content to save
+   * @param showLoader - Whether to show global loader (default: false)
+   * @returns Updated scratch pad response with content and updated_at
+   */
+  async updateScratchpad(
+    content: string,
+    showLoader = false
+  ): Promise<ApiResponse<{ content: string; updated_at: string }>> {
+    const response = await httpService.put<{ content: string; updated_at: string }>(
+      ENDPOINTS.updateScratchpad,
+      { content },
+      { showLoader }
+    );
+    
+    // API always returns { success: true, data: { content, updated_at } }
+    return response.data as ApiResponse<{ content: string; updated_at: string }>;
+  }
+
+  /**
+   * Clear scratch pad content
+   * @param showLoader - Whether to show global loader (default: false)
+   * @returns Success response
+   */
+  async clearScratchpad(showLoader = false): Promise<{ success: boolean; msg: string }> {
+    const response = await httpService.delete<{ success: boolean; msg: string }>(
+      ENDPOINTS.clearScratchpad,
+      { showLoader }
+    );
+    
+    // API always returns { success: true, msg: string }
+    return response.data as { success: boolean; msg: string };
   }
 }
 

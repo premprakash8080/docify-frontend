@@ -28,7 +28,7 @@ function DashboardHomePage() {
 
       <div className="row g-3">
         <div className="col-xl-6">
-          <NotesSection notes={notes} notebooks={notebooks} loading={loading} />
+          <NotesSection notebooks={notebooks} />
         </div>
         <div className="col-xl-6">
           <ScratchPadSection />

@@ -8,5 +8,9 @@ export const ENDPOINTS = {
   updateNote: (noteId: string) => `/notes/${noteId}`,
   deleteNote: (noteId: string) => `/notes/${noteId}`,
   getAllNotebooks: '/notebooks/list',
+   // Scratch pad
+   getScratchpad: '/scratch-pad',
+   updateScratchpad: '/scratch-pad',
+   clearScratchpad: '/scratch-pad',
 } as const;
 

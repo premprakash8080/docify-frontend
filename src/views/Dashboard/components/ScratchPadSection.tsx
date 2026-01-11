@@ -1,49 +1,69 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react';
-import { useAppDispatch } from '@/store';
 import { Card, CardBody, CardHeader } from 'react-bootstrap';
 import { TbDotsVertical, TbPlus } from 'react-icons/tb';
-import { debounce } from 'lodash';
-import { createNote } from '../store/notesSlice';
-import type { Note } from '../types';
+import noteService from '../services/note.service';
+import { useNotificationContext } from '@/context/useNotificationContext';
 
 function ScratchPadSection() {
-  const dispatch = useAppDispatch();
+  const { showNotification } = useNotificationContext();
   const [content, setContent] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const contentRef = useRef<HTMLTextAreaElement>(null);
-  const scratchPadNoteIdRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef(true);
 
+  // Load scratch pad content on mount
   useEffect(() => {
-    if (!scratchPadNoteIdRef.current) {
-      dispatch(createNote({ title: 'Scratch Pad' }))
-        .unwrap()
-        .then((note) => {
-          const noteId = (note as any)?.data?.note?.id || (note as Note)?.id;
-          if (noteId) {
-            scratchPadNoteIdRef.current = noteId;
-          }
-        })
-        .catch((error) => {
-          console.error('Failed to create scratch pad note:', error);
+    const loadScratchpad = async () => {
+      try {
+        setLoading(true);
+        const response = await noteService.getScratchpad(false);
+        setContent(response.data.content || '');
+      } catch (error: any) {
+        console.error('Failed to load scratch pad:', error);
+        showNotification({
+          message: error.msg || error.message || 'Failed to load scratch pad',
+          variant: 'danger',
+          title: 'Load Error'
         });
-    }
-  }, [dispatch]);
-
-  const debouncedSave = useRef(
-    debounce(async (noteId: string, contentValue: string) => {
-      if (noteId && contentValue !== undefined) {
-        console.log('Saving scratch pad:', contentValue);
+      } finally {
+        setLoading(false);
+        isInitialLoadRef.current = false;
       }
-    }, 1000)
-  ).current;
+    };
+
+    loadScratchpad();
+  }, [showNotification]);
+
+  // Save scratch pad content on blur
+  const handleBlur = async () => {
+    // Don't save on initial load blur
+    if (isInitialLoadRef.current) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await noteService.updateScratchpad(content, false);
+      // Optionally show a subtle success notification
+    } catch (error: any) {
+      console.error('Failed to save scratch pad:', error);
+      showNotification({
+        message: error.msg || error.message || 'Failed to save scratch pad',
+        variant: 'danger',
+        title: 'Save Error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleContentChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = event.target.value;
     setContent(newContent);
-    if (scratchPadNoteIdRef.current) {
-      debouncedSave(scratchPadNoteIdRef.current, newContent);
-    }
   };
 
+  // Auto-resize textarea
   useEffect(() => {
     if (contentRef.current) {
       contentRef.current.style.height = 'auto';
@@ -65,20 +85,38 @@ function ScratchPadSection() {
         </div>
       </CardHeader>
       <CardBody>
-        <textarea
-          ref={contentRef}
-          className="form-control border-0 bg-light"
-          style={{
-            minHeight: '300px',
-            resize: 'none',
-            fontFamily: 'inherit',
-            fontSize: '16px',
-            lineHeight: '1.6',
-          }}
-          value={content}
-          onChange={handleContentChange}
-          placeholder="Start writing..."
-        />
+        {loading ? (
+          <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '300px' }}>
+            <div className="spinner-border spinner-border-sm text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <textarea
+              ref={contentRef}
+              className="form-control border-0 bg-light"
+              style={{
+                minHeight: '300px',
+                resize: 'none',
+                fontFamily: 'inherit',
+                fontSize: '16px',
+                lineHeight: '1.6',
+              }}
+              value={content}
+              onChange={handleContentChange}
+              onBlur={handleBlur}
+              placeholder="Start writing..."
+              disabled={saving}
+            />
+            {saving && (
+              <div className="text-muted small mt-2">
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Saving...
+              </div>
+            )}
+          </>
+        )}
       </CardBody>
     </Card>
   );
