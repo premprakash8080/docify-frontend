@@ -774,9 +774,39 @@ const Index = () => {
                             // TODO: Implement copy link
                             console.log('Copy link')
                         }}
-                        onDuplicate={() => {
-                            // TODO: Implement duplicate
-                            console.log('Duplicate note')
+                        onDuplicate={async () => {
+                            if (!selectedNote?.id) return
+                            try {
+                                const result = await noteService.duplicateNote(selectedNote.id, true)
+                                
+                                if (result.success && result.data?.note) {
+                                    const duplicatedNote = result.data.note
+                                    
+                                    // Add the duplicated note to the filteredNotes list
+                                    setFilteredNotes(prev => {
+                                        // Add at the beginning of the list
+                                        return [duplicatedNote, ...prev]
+                                    })
+                                    
+                                    // Navigate to the duplicated note
+                                    const isMobile = window.innerWidth < 992
+                                    selectNote(duplicatedNote.id, !isMobile)
+                                    
+                                    // Show success notification
+                                    showNotification({
+                                        message: result.msg || 'Note duplicated successfully',
+                                        variant: 'success',
+                                        title: 'Duplicated'
+                                    })
+                                }
+                            } catch (error: any) {
+                                console.error('Failed to duplicate note:', error)
+                                showNotification({
+                                    message: error.msg || error.message || 'Failed to duplicate note',
+                                    variant: 'danger',
+                                    title: 'Error'
+                                })
+                            }
                         }}
                         onPin={async () => {
                             if (!selectedNote?.id) return

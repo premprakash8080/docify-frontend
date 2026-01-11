@@ -400,6 +400,16 @@ class NoteService {
     }
     return (response.data as NotebooksWithStacksResponse).data || [];
   }
+
+  //Duplicate note
+  async duplicateNote(id: string, showLoader = true): Promise<{ success: boolean; msg?: string; data?: { note: Note } }> {
+    const response = await httpService.post<{ success: boolean; msg?: string; data: { note: Note } }>(
+      NOTES_ENDPOINTS.duplicateNote,
+      { note_id: id },
+      { showLoader }
+    );
+    return response.data as { success: boolean; msg?: string; data?: { note: Note } };
+  }
 }
 
 export default new NoteService();

@@ -11,6 +11,9 @@ export const NOTES_ENDPOINTS = {
   updateNote: (id: string) => `/notes/${id}`,
   deleteNote: '/notes/deleteNote',
 
+  //duplicate note
+  duplicateNote:"/notes/duplicateNote",
+
   // Notebook operations
   moveNoteToNotebook: (id: string, notebookId: string) => `/notes/${id}/notebook/${notebookId}`,
   createNotebook: '/notebooks/createNotebook',
